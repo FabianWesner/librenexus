@@ -118,12 +118,32 @@ already know the resource exists. Documented choice per Epic 03 notes.
 - v1 has no user file uploads (SEC-UPLOAD-1: not applicable).
 - UI language: English only.
 
+## Public site (Epic 01)
+
+- The homepage's secondary CTA ("See a demo booking page") links to the docs
+  booking section until the demo tenant exists (Epic 09), per the epic note
+  that the link must never 404. Swapped to the seeded demo booking URL in
+  Epic 09.
+- The GitHub repository URL is `config('app.repository_url')`
+  (`APP_REPOSITORY_URL` env); the placeholder default is confirmed when the
+  proof package is published (Epic 10). External links are not asserted by
+  tests; all internal links are.
+- The imprint identifies the installation as a demo deployment; real
+  operators replace it when self-hosting.
+
 ## Environment & tooling
 
 - Local: Laravel Herd (https://librenexus.test), PostgreSQL on 127.0.0.1:5432
   (`librenexus` dev, `librenexus_test` tests). CI: GitHub Actions per
   `.github/workflows/ci.yml`.
 - Coverage/mutation run via a pcov-enabled PHP (`COVERAGE_PHP` in Makefile).
+- Lighthouse's `is-on-https` audit requires a secure context. CI serves on
+  `127.0.0.1` (a secure context). Locally, run `make performance
+  APP_URL=http://127.0.0.1:8000` against `php artisan serve`, or secure the
+  Herd site (`herd secure`) and use `APP_URL=https://librenexus.test`. The
+  plain Herd HTTP domain also 404s `/favicon.ico` (Herd proxy quirk, file
+  serves fine via artisan), which trips the console-error audit; both are
+  environment effects, not application defects.
 - `make verify` thresholds are never modified (QG-* rule).
 
 ## Deferred findings log

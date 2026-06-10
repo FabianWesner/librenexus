@@ -4,7 +4,12 @@ use App\Http\Controllers\HealthController;
 use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome')->name('home');
+Route::view('/', 'marketing.home')->name('home');
+Route::view('pricing', 'marketing.pricing')->name('pricing');
+Route::view('docs', 'marketing.docs')->name('docs');
+Route::view('open-source', 'marketing.open-source')->name('open-source');
+Route::view('privacy', 'marketing.privacy')->name('privacy');
+Route::view('imprint', 'marketing.imprint')->name('imprint');
 
 Route::get('health', HealthController::class)->name('health');
 

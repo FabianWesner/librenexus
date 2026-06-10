@@ -17,6 +17,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Source Repository
+    |--------------------------------------------------------------------------
+    |
+    | Public repository for the open-source page and footer (FR-PUBLIC-3).
+    | The final public URL is confirmed when the proof package is published.
+    |
+    */
+
+    'repository_url' => env('APP_REPOSITORY_URL', 'https://github.com/librenexus/librenexus'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |
