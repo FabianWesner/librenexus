@@ -1,0 +1,20 @@
+# Gitleaks configuration for LibreNexus (rule QG-SECRETS).
+# Extends the default ruleset; allowlists local-only files that legitimately
+# contain machine-local secrets and generated artifacts.
+
+[extend]
+useDefault = true
+
+[allowlist]
+paths = [
+    '''^\.env$''',
+    '''^\.claude/skills/''',
+    '''^\.agents/skills/''',
+    '''^\.codex/''',
+    '''^vendor/''',
+    '''^node_modules/''',
+    '''^storage/''',
+    '''^public/build/''',
+    '''^reports/''',
+    '''^tools/''',
+]

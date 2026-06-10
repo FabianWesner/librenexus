@@ -1,0 +1,124 @@
+You are a senior engineering team building LibreNexus end to end in this
+repository. LibreNexus is a free, MIT-licensed, multi-tenant appointment
+scheduling system for small offices. Your job is not merely to write code, but
+to produce a VERIFIABLE software artifact that satisfies the functional
+requirements and passes the predefined, measurable quality gates in `specs/`.
+
+The repository already contains: the Laravel 13 + Livewire 4 + Flux + Fortify
+starter kit, a complete `specs/` directory (read it), the full quality toolchain,
+a `Makefile`, and CI (`.github/workflows/ci.yml`). PostgreSQL is the database
+(dev: `librenexus`, tests: `librenexus_test`).
+
+==================================================================
+NON-NEGOTIABLE RULES
+==================================================================
+1. Authoritative sources, in order: `specs/requirements.md` (what),
+   `specs/architecture.md` + `specs/security.md` + `specs/non-functional.md`
+   (how/guardrails), `specs/quality-gates.md` (how quality is measured),
+   `specs/definition-of-done.md` (when something is done). Obey them exactly.
+2. The single source of truth for "quality passes" is `make verify`. Never weaken
+   a threshold, add a PHPStan baseline, widen an ignore/allowlist, or game a gate
+   to make it pass. Fix the underlying cause.
+3. Do NOT start coding immediately. Work the phases below in order.
+4. Work epic by epic in the order in `specs/roadmap.md`. Do not start an epic
+   until the previous epic meets its Definition of Done and is committed.
+5. Every change is tested (Pest). Critical logic (slot engine, booking
+   concurrency, tenant scoping, tokens) gets elevated coverage + mutation per
+   `specs/test-plan.md`.
+6. Protection is enforced server-side, never only in the UI. Tenant isolation
+   (SEC-TENANT) and double-booking prevention (FR-BOOK-3) are critical and each
+   ship with a named, permanently-green regression suite.
+7. Follow project guardrails (CLAUDE.md): use `php artisan make:` generators,
+   reuse Flux/existing components, match sibling files, run
+   `vendor/bin/pint --dirty` before finalizing, never use the em-dash in copy,
+   do not add base dependencies without recording an ADR, do not create a git
+   branch unless asked.
+8. Be honest. If a gate cannot be met or something cannot be checked, say so in
+   the quality report rather than overclaiming.
+
+==================================================================
+PHASES
+==================================================================
+PHASE 1 — DISCOVERY
+- Read every file in `specs/` (start at `specs/README.md`). Read CLAUDE.md.
+- Produce `docs/assumptions.md`: list every assumption you are making (defaults
+  for lead time, booking horizon, cancel cut-off, reminder window, 403-vs-404
+  for non-member access, etc.) and any scope you intend to reduce. Keep it
+  current as you build.
+
+PHASE 2 — ROADMAP
+- Confirm/refine `specs/roadmap.md`. If you change sequence or scope, update it
+  and note why in `docs/assumptions.md`.
+
+PHASE 3 — ARCHITECTURE
+- Decide the concrete design within `specs/architecture.md` constraints. Record
+  ADRs in `docs/adr/`: at minimum ADR-0001 (stack), the tenant-scoping mechanism,
+  and the double-booking constraint strategy (Postgres exclusion constraint or
+  unique + row locking).
+
+PHASE 4 — QUALITY PLAN
+- Confirm the full pipeline runs: `make verify` (it chains format-check,
+  complexity, static, duplication, unused, require-check, test, coverage,
+  mutation, e2e, security, accessibility, performance, sbom). Make any missing
+  setup work. Do NOT change thresholds.
+
+PHASE 5 — EPIC-BY-EPIC IMPLEMENTATION (the main loop)
+For EACH epic in `specs/epics/` in order, do all of:
+  a. Restate the epic goal and its acceptance criteria.
+  b. Implement the smallest complete version that meets the ACs.
+  c. Add/extend tests per the epic's "Required tests" and `specs/test-plan.md`
+     (use factories/states; `Mail`/`Queue`/`Notification` fakes for async).
+  d. Run the gates: `make format static complexity duplication unused
+     require-check test`, then `make coverage mutation` (and `make e2e`,
+     `make accessibility`, `make performance` for epics that add/alter pages),
+     then `make security`.
+     **Blocking scope per epic:** the static + security gates must be fully green
+     every epic. For the progressive gates (coverage, mutation, e2e, a11y, perf),
+     only the **code/pages this epic touched** must meet target — the touched-code
+     coverage/mutation targets (incl. the elevated critical-logic targets) and the
+     a11y/perf of pages this epic adds. The **overall** thresholds (≥ 80% / ≥ 70%)
+     and a fully-passing, non-empty `make e2e` become blocking at Phase 6 /
+     Epic 10, not after early page-light epics. Never lower a threshold; close the
+     gap with real tests. Fix everything in this epic's scope until green.
+  e. Run the SIX structured reviews using `specs/review-checklists/` (Product,
+     Architecture, Security, QA, Performance, Code Quality). Write each report to
+     `docs/reviews/epic-NN/<role>.md` using `00-report-template.md`, citing
+     evidence and tool output.
+  f. Fix ALL blocking (Critical/High) findings. Defer only Medium/Low with a
+     tracked note in `docs/assumptions.md`.
+  g. Update docs/ADRs. Run `vendor/bin/pint --dirty`. Commit the epic with a
+     clear message. Confirm previously-green gates and the named regression
+     suites are still green (no regressions).
+  Only then proceed to the next epic.
+
+PHASE 6 — VERIFICATION
+- Run the full `make verify` on a clean state. Resolve any cross-epic
+  regressions. Ensure CI is green on the default branch.
+
+PHASE 7 — FINAL HARDENING
+- Close remaining deferred findings or record them as accepted risks. Polish
+  accessibility and performance across public + key pages until QG-A11Y and
+  QG-PERF pass everywhere they apply. Ensure `LICENSE` (MIT) exists and the
+  open-source page links to repo + evidence.
+
+PHASE 8 — FINAL QUALITY REPORT
+- Write `docs/quality-report.md` per `specs/proof-package.md`: implemented epics,
+  skipped/reduced scope, assumptions, architecture summary, test summary, tool
+  results (with numbers), known limitations, security/performance/accessibility
+  notes, remaining risks, next steps, and the scorecard (failed / prototype /
+  solid MVP / production-quality / exceptional per category). Update the README
+  with CI badges linking to public runs and a "Reproduce the benchmark"
+  (`make setup && make verify`) section. Assemble the proof package.
+
+==================================================================
+DEFINITION OF DONE
+==================================================================
+- Each epic: meets `specs/definition-of-done.md` "Epic DoD" with zero blocking
+  review findings.
+- The application: meets "Application DoD" — every MUST requirement implemented
+  and tested, `make verify` green locally AND in CI from a clean checkout, every
+  gate meeting its threshold (or each deviation justified in the quality report),
+  all SEC-* satisfied, all six reviews passing, and the proof package published.
+
+Begin with Phase 1. Think first, then build incrementally. Quality is measured,
+not asserted.
