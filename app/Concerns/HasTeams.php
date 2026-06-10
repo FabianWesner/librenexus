@@ -7,6 +7,8 @@ use App\Data\UserTeam;
 use App\Enums\TeamPermission;
 use App\Enums\TeamRole;
 use App\Models\Membership;
+use App\Models\Scopes\TenantScope;
+use App\Models\Staff;
 use App\Models\Team;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -21,11 +23,12 @@ trait HasTeams
     /**
      * Get all of the teams the user belongs to.
      *
-     * @return BelongsToMany<Team, $this>
+     * @return BelongsToMany<Team, $this, Membership, 'pivot'>
      */
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class, 'team_members', 'user_id', 'team_id')
+            ->using(Membership::class)
             ->withPivot(['role'])
             ->withTimestamps();
     }
@@ -153,11 +156,13 @@ trait HasTeams
     }
 
     /**
-     * Get the user's team as a UserTeam object.
+     * Get the user's team as a UserTeam object. Teams loaded through the
+     * teams() relationship carry their membership pivot, so the role is
+     * read from it instead of issuing one role query per team.
      */
     public function toUserTeam(Team $team): UserTeam
     {
-        $role = $this->teamRole($team);
+        $role = $this->pivotTeamRole($team) ?? $this->teamRole($team);
 
         return new UserTeam(
             id: $team->id,
@@ -168,6 +173,43 @@ trait HasTeams
             roleLabel: $role?->label(),
             isCurrent: $this->isCurrentTeam($team),
         );
+    }
+
+    /**
+     * Read the user's role from the membership pivot loaded by teams(),
+     * or null when the team was not loaded through that relationship.
+     */
+    protected function pivotTeamRole(Team $team): ?TeamRole
+    {
+        $pivot = $team->getRelationValue('pivot');
+
+        if (! $pivot instanceof Membership) {
+            return null;
+        }
+
+        return $pivot->role;
+    }
+
+    /**
+     * Get the staff record linked to the user's membership on the given
+     * team (FR-STAFF-4), or null when no record is linked. Scoped to the
+     * given team explicitly, so it is safe outside a tenant context.
+     */
+    public function staffRecordFor(Team $team): ?Staff
+    {
+        $membership = $this->teamMemberships()
+            ->where('team_id', $team->id)
+            ->first();
+
+        if ($membership === null) {
+            return null;
+        }
+
+        return Staff::query()
+            ->withoutGlobalScope(TenantScope::class)
+            ->where('team_id', $team->id)
+            ->where('membership_id', $membership->id)
+            ->first();
     }
 
     /**

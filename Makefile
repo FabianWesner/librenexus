@@ -86,10 +86,10 @@ test: ## QG-TESTS: full Pest suite (unit + feature)
 	php artisan test --compact
 
 coverage: ## QG-COVERAGE: line coverage >= $(COVERAGE_MIN)%
-	$(COVERAGE_PHP) vendor/bin/pest --coverage --min=$(COVERAGE_MIN) --compact
+	$(COVERAGE_PHP) -d memory_limit=1G vendor/bin/pest --coverage --min=$(COVERAGE_MIN) --compact
 
 mutation: ## QG-MUTATION: mutation score >= $(MUTATION_MIN)% (Pest --mutate)
-	$(COVERAGE_PHP) vendor/bin/pest --mutate --covered-only --parallel --min=$(MUTATION_MIN) --compact
+	$(COVERAGE_PHP) -d memory_limit=1G vendor/bin/pest --mutate --covered-only --parallel --min=$(MUTATION_MIN) --compact
 
 e2e: ## QG-E2E: Pest 4 browser tests (Playwright)
 	@if [ -d tests/Browser ]; then \

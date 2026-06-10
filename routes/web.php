@@ -25,6 +25,8 @@ Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
         Route::view('dashboard', 'dashboard')->name('dashboard');
+        Route::livewire('staff', 'pages::staff.index')->name('staff.index');
+        Route::livewire('services', 'pages::services.index')->name('services.index');
     });
 
 Route::middleware(['auth', 'verified'])->group(function () {

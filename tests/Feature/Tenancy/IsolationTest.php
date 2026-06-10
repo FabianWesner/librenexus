@@ -3,11 +3,15 @@
 use App\Concerns\BelongsToTenant;
 use App\Data\CurrentTenant;
 use App\Enums\TeamRole;
+use App\Http\Middleware\EnsureTeamMembership;
 use App\Models\Scopes\TenantScope;
+use App\Models\Service;
+use App\Models\Staff;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
@@ -213,4 +217,102 @@ describe('tenant scope mechanism', function () {
         expect($record->getAttribute('team_id'))->toBe($this->teamB->id)
             ->and(app(CurrentTenant::class)->get())->toBeNull();
     });
+});
+
+describe('staff and services isolation (Epic 04)', function () {
+    test('a member of tenant A gets a 404 on tenant B staff and services pages', function () {
+        $this->actingAs($this->ownerA)
+            ->get(route('staff.index', ['current_team' => $this->teamB->slug]))
+            ->assertNotFound();
+
+        $this->actingAs($this->ownerA)
+            ->get(route('services.index', ['current_team' => $this->teamB->slug]))
+            ->assertNotFound();
+    });
+
+    test('a member of tenant A cannot mount the staff or services page for tenant B', function () {
+        $this->actingAs($this->ownerA);
+
+        Livewire::test('pages::staff.index', ['current_team' => $this->teamB])
+            ->assertForbidden();
+
+        Livewire::test('pages::services.index', ['current_team' => $this->teamB])
+            ->assertForbidden();
+    });
+
+    test('tenant B staff cannot be read, updated, or deactivated from tenant A', function () {
+        $staffB = Staff::factory()->create(['team_id' => $this->teamB->id]);
+
+        app(CurrentTenant::class)->set($this->teamA);
+        $this->actingAs($this->ownerA);
+
+        $component = fn () => Livewire::test('pages::staff.index', ['current_team' => $this->teamA]);
+
+        // The tenant scope hides foreign records entirely, so reads and
+        // mutations fail with a not-found (rendered as a 404 over HTTP).
+        expect(fn () => $component()->call('editStaff', $staffB->id))
+            ->toThrow(ModelNotFoundException::class);
+        expect(fn () => $component()->call('deactivateStaff', $staffB->id))
+            ->toThrow(ModelNotFoundException::class);
+
+        expect($staffB->fresh()->is_active)->toBeTrue();
+    });
+
+    test('tenant B services cannot be read, updated, or archived from tenant A', function () {
+        $serviceB = Service::factory()->create(['team_id' => $this->teamB->id]);
+
+        app(CurrentTenant::class)->set($this->teamA);
+        $this->actingAs($this->ownerA);
+
+        $component = fn () => Livewire::test('pages::services.index', ['current_team' => $this->teamA]);
+
+        expect(fn () => $component()->call('editService', $serviceB->id))
+            ->toThrow(ModelNotFoundException::class);
+        expect(fn () => $component()->call('archiveService', $serviceB->id))
+            ->toThrow(ModelNotFoundException::class);
+
+        expect($serviceB->fresh()->is_active)->toBeTrue();
+    });
+
+    test('a membership of tenant B cannot be linked to a staff record of tenant A', function () {
+        $staffA = Staff::factory()->create(['team_id' => $this->teamA->id]);
+        $membershipB = $this->teamB->memberships()->where('user_id', $this->ownerB->id)->firstOrFail();
+
+        app(CurrentTenant::class)->set($this->teamA);
+        $this->actingAs($this->ownerA);
+
+        Livewire::test('pages::staff.index', ['current_team' => $this->teamA])
+            ->call('editStaff', $staffA->id)
+            ->set('membershipId', $membershipB->id)
+            ->call('saveStaff')
+            ->assertHasErrors('membershipId');
+
+        expect($staffA->fresh()->membership_id)->toBeNull();
+    });
+
+    test('tenant B staff and services never appear in tenant A lists', function () {
+        Staff::factory()->create(['team_id' => $this->teamA->id, 'name' => 'Alice Tenant-A-Staff']);
+        Staff::factory()->create(['team_id' => $this->teamB->id, 'name' => 'Bob Tenant-B-Staff']);
+        Service::factory()->create(['team_id' => $this->teamA->id, 'name' => 'Tenant-A-Service']);
+        Service::factory()->create(['team_id' => $this->teamB->id, 'name' => 'Tenant-B-Service']);
+
+        $this->actingAs($this->ownerA)
+            ->get(route('staff.index', ['current_team' => $this->teamA->slug]))
+            ->assertOk()
+            ->assertSee('Alice Tenant-A-Staff')
+            ->assertDontSee('Bob Tenant-B-Staff');
+
+        $this->actingAs($this->ownerA)
+            ->get(route('services.index', ['current_team' => $this->teamA->slug]))
+            ->assertOk()
+            ->assertSee('Tenant-A-Service')
+            ->assertDontSee('Tenant-B-Service');
+    });
+});
+
+test('the tenant middleware is registered as Livewire persistent middleware', function () {
+    // Guards the AppServiceProvider registration that re-establishes the
+    // CurrentTenant context on Livewire update requests (SEC-TENANT).
+    expect(Livewire::getPersistentMiddleware())
+        ->toContain(EnsureTeamMembership::class);
 });

@@ -204,3 +204,7 @@ Tracked per definition-of-done.md (Medium/Low only). Currently empty.
 | 03 | Team switcher reads one role query per team (small bounded 1+N) | Medium | Read role from the loaded pivot + add a query-count assertion in Epic 04. |
 | 03 | Invitation accepted via GET; invite codes stored in plaintext | Low | Revisit in Epic 10 hardening (codes are 64-char random, single-use, expiring). |
 | 03 | declineInvitation path untested; teams edit component oversized | Low | Cover/refactor by Epic 10. |
+| 04 | AC-3 "past appointments remain" and AC-4 "slot engine respects assignment" provable only once appointments/slot engine exist | Medium | Prove with explicit tests in Epics 05 (assignment) and 06/07 (history retention). |
+| 04 | Staff/service CRUD + link logic lives inline in Livewire SFC pages | Medium | Extract to Actions if the components grow again; revisit by Epic 10. |
+| 04 | Pest browser server shares container state across requests (test-env limitation) | Low | Mitigated by the persistent-middleware regression test in the isolation suite. |
+| 04 | formattedPrice assumes 2-decimal currencies | Low | Fine for the v1 currency list (EUR/USD/GBP/CHF); note for future currencies. |

@@ -1,0 +1,37 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('services', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('team_id')->constrained()->cascadeOnDelete();
+            $table->string('name');
+            $table->text('description')->nullable();
+            $table->unsignedInteger('duration_minutes');
+            $table->unsignedInteger('buffer_before_minutes')->default(0);
+            $table->unsignedInteger('buffer_after_minutes')->default(0);
+            // Price in minor units of the team currency (FR-SERVICE-3).
+            $table->unsignedInteger('price_minor')->nullable();
+            $table->string('color')->default('indigo');
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('services');
+    }
+};

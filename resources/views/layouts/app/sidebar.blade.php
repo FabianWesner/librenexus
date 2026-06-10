@@ -17,17 +17,25 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
+
+                    <flux:sidebar.item icon="users" :href="route('staff.index')" :current="request()->routeIs('staff.index')" wire:navigate>
+                        {{ __('Staff') }}
+                    </flux:sidebar.item>
+
+                    <flux:sidebar.item icon="briefcase" :href="route('services.index')" :current="request()->routeIs('services.index')" wire:navigate>
+                        {{ __('Services') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 
             <flux:spacer />
 
             <flux:sidebar.nav>
-                <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
+                <flux:sidebar.item icon="folder-git-2" :href="config('app.repository_url')" target="_blank">
                     {{ __('Repository') }}
                 </flux:sidebar.item>
 
-                <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
+                <flux:sidebar.item icon="book-open-text" :href="route('docs')" wire:navigate>
                     {{ __('Documentation') }}
                 </flux:sidebar.item>
             </flux:sidebar.nav>
