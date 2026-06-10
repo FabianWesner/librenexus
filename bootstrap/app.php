@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\AddCorrelationId;
+use App\Http\Middleware\SetSecurityHeaders;
 use App\Http\Middleware\SetTeamUrlDefaults;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -13,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append([
+            AddCorrelationId::class,
+            SetSecurityHeaders::class,
+        ]);
+
         $middleware->web(append: [
             SetTeamUrlDefaults::class,
         ]);

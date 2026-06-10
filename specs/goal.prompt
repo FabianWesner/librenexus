@@ -4,6 +4,8 @@ scheduling system for small offices. Your job is not merely to write code, but
 to produce a VERIFIABLE software artifact that satisfies the functional
 requirements and passes the predefined, measurable quality gates in `specs/`.
 
+You can use sub-agents to keep your own context free.
+
 The repository already contains: the Laravel 13 + Livewire 4 + Flux + Fortify
 starter kit, a complete `specs/` directory (read it), the full quality toolchain,
 a `Makefile`, and CI (`.github/workflows/ci.yml`). PostgreSQL is the database

@@ -14,6 +14,12 @@ return [
     |
     */
 
+    // Error-tracking integration point (NFR-OBS-3): a tracker (e.g. Sentry)
+    // can be enabled by setting the DSN; the application is inert without it.
+    'error_tracking' => [
+        'dsn' => env('ERROR_TRACKING_DSN'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
