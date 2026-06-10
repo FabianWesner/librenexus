@@ -26,6 +26,7 @@ Route::prefix('{current_team}')
     ->group(function () {
         Route::view('dashboard', 'dashboard')->name('dashboard');
         Route::livewire('staff', 'pages::staff.index')->name('staff.index');
+        Route::livewire('staff/{staff}/availability', 'pages::staff.availability')->name('staff.availability');
         Route::livewire('services', 'pages::services.index')->name('services.index');
     });
 

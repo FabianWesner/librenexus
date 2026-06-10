@@ -56,6 +56,21 @@ class StaffPolicy
     }
 
     /**
+     * Determine whether the user can manage the availability (weekly rules
+     * and time off) of the staff record. Owners and admins manage every
+     * staff member of their team (FR-TENANT-5); a staff-role member manages
+     * exactly the staff record linked to their own membership (FR-STAFF-4).
+     */
+    public function manageAvailability(User $user, Staff $staff): bool
+    {
+        if ($this->manages($user, $staff->team)) {
+            return true;
+        }
+
+        return $staff->membership?->user_id === $user->id;
+    }
+
+    /**
      * Determine whether the user manages staff on the team (owner or admin).
      */
     private function manages(User $user, Team $team): bool

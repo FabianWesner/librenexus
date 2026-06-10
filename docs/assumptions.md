@@ -57,6 +57,22 @@ already know the resource exists. Documented choice per Epic 03 notes.
   local times resolve to the first (earlier UTC) occurrence, matching Carbon's
   default.
 
+## Availability & slots (Epic 05)
+
+- Availability rule times are minute-precision strings in the tenant
+  timezone; an end of `24:00` means end of day. Overlapping rules on the
+  same weekday are rejected at input but unioned defensively by the engine.
+- The PostgreSQL connection pins `timezone => UTC` (config/database.php) so
+  timestamp storage is UTC regardless of the server's session timezone
+  (ARCH-DATA-2); a feature test asserts Berlin 10:00 stores as 08:00 UTC.
+- Three engine mutants are accepted as behaviorally equivalent, verified
+  case by case and documented in tests/Unit/SlotEngineTest.php (zero-width
+  window comparison; the two int casts on numeric strings). Every other
+  engine mutant is killed (engine mutation 95%+).
+- Livewire page-component implicit binding runs before route middleware sets
+  the tenant context, so tenant-scoped route models are resolved in mount()
+  after EnsureTeamMembership has run (availability editor pattern).
+
 ## Invitations (FR-TENANT-6)
 
 - Invitations expire after **7 days** (spec says "expire" without a value).
@@ -208,3 +224,5 @@ Tracked per definition-of-done.md (Medium/Low only). Currently empty.
 | 04 | Staff/service CRUD + link logic lives inline in Livewire SFC pages | Medium | Extract to Actions if the components grow again; revisit by Epic 10. |
 | 04 | Pest browser server shares container state across requests (test-env limitation) | Low | Mitigated by the persistent-middleware regression test in the isolation suite. |
 | 04 | formattedPrice assumes 2-decimal currencies | Low | Fine for the v1 currency list (EUR/USD/GBP/CHF); note for future currencies. |
+| 05 | GetBookableSlots eager-loads time off unbounded by date range | Medium | Constrain by the requested window in Epic 06 before the public booking hot path. |
+| 05 | Engine has no guard against a non-positive packing step (unreachable via app validation) | Low | Add defensive guard with Epic 06 booking wiring. |

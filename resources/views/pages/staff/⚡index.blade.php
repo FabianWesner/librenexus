@@ -226,6 +226,22 @@ new #[Title('Staff')] class extends Component
     {
         return Gate::allows('create', [Staff::class, $this->team]);
     }
+
+    /**
+     * The staff record linked to the acting user's own membership, if any.
+     * A staff-role member may manage exactly this record's availability
+     * (StaffPolicy::manageAvailability, FR-STAFF-4); the server-side
+     * authorization lives on the availability page itself.
+     */
+    #[Computed]
+    public function ownStaffId(): ?int
+    {
+        $staffId = Staff::query()
+            ->whereRelation('membership', 'user_id', Auth::id())
+            ->value('id');
+
+        return $staffId === null ? null : (int) $staffId;
+    }
 }; ?>
 
 <section class="w-full">
@@ -261,7 +277,7 @@ new #[Title('Staff')] class extends Component
                     <flux:table.column>{{ __('Color') }}</flux:table.column>
                     <flux:table.column>{{ __('Services') }}</flux:table.column>
                     <flux:table.column>{{ __('Status') }}</flux:table.column>
-                    @if ($this->canManage)
+                    @if ($this->canManage || $this->ownStaffId !== null)
                         <flux:table.column>
                             <span class="sr-only">{{ __('Actions') }}</span>
                         </flux:table.column>
@@ -287,22 +303,30 @@ new #[Title('Staff')] class extends Component
                                     <flux:badge color="zinc" size="sm">{{ __('Inactive') }}</flux:badge>
                                 @endif
                             </flux:table.cell>
-                            @if ($this->canManage)
+                            @if ($this->canManage || $this->ownStaffId !== null)
                                 <flux:table.cell align="end">
-                                    <flux:tooltip :content="__('Edit staff member')">
-                                        <flux:button variant="ghost" size="sm" icon="pencil" wire:click="editStaff({{ $staffMember->id }})" data-test="staff-edit-button" />
-                                    </flux:tooltip>
-
-                                    @if ($staffMember->is_active)
-                                        <flux:modal.trigger name="deactivate-staff-{{ $staffMember->id }}">
-                                            <flux:tooltip :content="__('Deactivate staff member')">
-                                                <flux:button variant="ghost" size="sm" icon="pause" data-test="staff-deactivate-button" />
-                                            </flux:tooltip>
-                                        </flux:modal.trigger>
-                                    @else
-                                        <flux:tooltip :content="__('Reactivate staff member')">
-                                            <flux:button variant="ghost" size="sm" icon="play" wire:click="reactivateStaff({{ $staffMember->id }})" data-test="staff-reactivate-button" />
+                                    @if ($this->canManage || $staffMember->id === $this->ownStaffId)
+                                        <flux:tooltip :content="__('Edit availability')">
+                                            <flux:button variant="ghost" size="sm" icon="clock" :href="route('staff.availability', ['current_team' => $team->slug, 'staff' => $staffMember->id])" data-test="staff-availability-link" />
                                         </flux:tooltip>
+                                    @endif
+
+                                    @if ($this->canManage)
+                                        <flux:tooltip :content="__('Edit staff member')">
+                                            <flux:button variant="ghost" size="sm" icon="pencil" wire:click="editStaff({{ $staffMember->id }})" data-test="staff-edit-button" />
+                                        </flux:tooltip>
+
+                                        @if ($staffMember->is_active)
+                                            <flux:modal.trigger name="deactivate-staff-{{ $staffMember->id }}">
+                                                <flux:tooltip :content="__('Deactivate staff member')">
+                                                    <flux:button variant="ghost" size="sm" icon="pause" data-test="staff-deactivate-button" />
+                                                </flux:tooltip>
+                                            </flux:modal.trigger>
+                                        @else
+                                            <flux:tooltip :content="__('Reactivate staff member')">
+                                                <flux:button variant="ghost" size="sm" icon="play" wire:click="reactivateStaff({{ $staffMember->id }})" data-test="staff-reactivate-button" />
+                                            </flux:tooltip>
+                                        @endif
                                     @endif
                                 </flux:table.cell>
                             @endif

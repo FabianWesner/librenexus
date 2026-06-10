@@ -4,11 +4,13 @@ use App\Concerns\BelongsToTenant;
 use App\Data\CurrentTenant;
 use App\Enums\TeamRole;
 use App\Http\Middleware\EnsureTeamMembership;
+use App\Models\AvailabilityRule;
 use App\Models\Scopes\TenantScope;
 use App\Models\Service;
 use App\Models\Staff;
 use App\Models\Team;
 use App\Models\TeamInvitation;
+use App\Models\TimeOff;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -307,6 +309,66 @@ describe('staff and services isolation (Epic 04)', function () {
             ->assertOk()
             ->assertSee('Tenant-A-Service')
             ->assertDontSee('Tenant-B-Service');
+    });
+});
+
+describe('availability isolation (Epic 05)', function () {
+    beforeEach(function () {
+        $this->staffB = Staff::factory()->create(['team_id' => $this->teamB->id]);
+    });
+
+    test('a member of tenant A gets a 404 on the availability route of tenant B staff', function () {
+        // Under tenant B's slug, membership fails first (SEC-TENANT-4).
+        $this->actingAs($this->ownerA)
+            ->get(route('staff.availability', ['current_team' => $this->teamB->slug, 'staff' => $this->staffB->id]))
+            ->assertNotFound();
+
+        // Under tenant A's own slug, the {staff} parameter is resolved in
+        // mount through the tenant-scoped query (after the middleware set
+        // the context), so the foreign record stays invisible and 404s.
+        $this->actingAs($this->ownerA)
+            ->get(route('staff.availability', ['current_team' => $this->teamA->slug, 'staff' => $this->staffB->id]))
+            ->assertNotFound();
+    });
+
+    test('a member of tenant A cannot add rules or time off to tenant B staff via the component', function () {
+        $this->actingAs($this->ownerA);
+
+        // With tenant A's context, the foreign staff record is invisible to
+        // the mount query (fail-closed tenant scope, rendered as 404).
+        app(CurrentTenant::class)->set($this->teamA);
+
+        expect(fn () => Livewire::test('pages::staff.availability', ['current_team' => $this->teamA, 'staff' => $this->staffB->id]))
+            ->toThrow(ModelNotFoundException::class);
+
+        // Even if the record resolves (defense in depth with tenant B's
+        // context), the policy denies the non-member outright.
+        app(CurrentTenant::class)->set($this->teamB);
+
+        Livewire::test('pages::staff.availability', ['current_team' => $this->teamB, 'staff' => $this->staffB->id])
+            ->assertForbidden();
+
+        expect($this->staffB->availabilityRules()->withoutGlobalScopes()->count())->toBe(0)
+            ->and($this->staffB->timeOff()->withoutGlobalScopes()->count())->toBe(0);
+    });
+
+    test('tenant B availability rules and time off never leak into tenant A queries', function () {
+        $staffA = Staff::factory()->create(['team_id' => $this->teamA->id]);
+
+        AvailabilityRule::factory()->window(1, '09:00', '12:00')->create([
+            'team_id' => $this->teamA->id,
+            'staff_id' => $staffA->id,
+        ]);
+        AvailabilityRule::factory()->window(2, '08:00', '18:00')->create([
+            'team_id' => $this->teamB->id,
+            'staff_id' => $this->staffB->id,
+        ]);
+        TimeOff::factory()->create(['team_id' => $this->teamB->id, 'staff_id' => $this->staffB->id]);
+
+        app(CurrentTenant::class)->set($this->teamA);
+
+        expect(AvailabilityRule::query()->pluck('staff_id')->all())->toBe([$staffA->id])
+            ->and(TimeOff::query()->count())->toBe(0);
     });
 });
 

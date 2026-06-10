@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -60,6 +61,26 @@ class Staff extends TenantModel
     public function services(): BelongsToMany
     {
         return $this->belongsToMany(Service::class, 'service_staff');
+    }
+
+    /**
+     * Get the weekly availability rules for this staff member (FR-AVAIL-1).
+     *
+     * @return HasMany<AvailabilityRule, $this>
+     */
+    public function availabilityRules(): HasMany
+    {
+        return $this->hasMany(AvailabilityRule::class);
+    }
+
+    /**
+     * Get the time-off intervals for this staff member (FR-AVAIL-2).
+     *
+     * @return HasMany<TimeOff, $this>
+     */
+    public function timeOff(): HasMany
+    {
+        return $this->hasMany(TimeOff::class);
     }
 
     /**

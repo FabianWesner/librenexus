@@ -97,6 +97,10 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Pin the session timezone so naive timestamp strings written by
+            // Eloquent are interpreted as UTC regardless of the server's
+            // default timezone (ARCH-DATA-2: store timestamps in UTC).
+            'timezone' => 'UTC',
         ],
 
         'sqlsrv' => [
