@@ -4,6 +4,7 @@ use App\Models\Team;
 use App\Models\User;
 use Flux\Flux;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 new class extends Component {
@@ -36,6 +37,12 @@ new class extends Component {
 
         if ($this->memberName === '') {
             $this->memberName = $user->name;
+        }
+
+        if ($this->team->isLastOwner($user)) {
+            throw ValidationException::withMessages([
+                'member' => [__('The last owner cannot be removed. Transfer ownership or delete the team instead.')],
+            ]);
         }
 
         $this->team->memberships()

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Data\CurrentTenant;
 use App\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\User;
@@ -20,9 +21,13 @@ class EnsureTeamMembership
     {
         [$user, $team] = [$request->user(), $this->team($request)];
 
-        abort_if(! $user || ! $team || ! $user->belongsToTeam($team), 403);
+        // 404 (not 403) so non-members cannot probe tenant existence
+        // (SEC-TENANT-4, documented in docs/assumptions.md).
+        abort_if(! $user || ! $team || ! $user->belongsToTeam($team), 404);
 
         $this->ensureTeamMemberHasRequiredRole($user, $team, $minimumRole);
+
+        app(CurrentTenant::class)->set($team);
 
         if ($request->route('current_team') && ! $user->isCurrentTeam($team)) {
             $user->switchTeam($team);

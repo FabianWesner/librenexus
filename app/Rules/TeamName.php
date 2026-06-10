@@ -78,6 +78,14 @@ class TeamName implements ValidationRule
         'api',
         'app',
         'apps',
+        // LibreNexus static paths that must never be shadowed by a tenant
+        // slug (ARCH-ROUTING-4). Route-derived prefixes cover the rest.
+        'assets',
+        'book',
+        'health',
+        'imprint',
+        'manage',
+        'up',
         'attributes',
         'auth',
         'billing',
@@ -356,6 +364,14 @@ class TeamName implements ValidationRule
         if (in_array($name, $this->reservedNames(), true)) {
             $fail(__('This team name is reserved and cannot be used.'));
         }
+    }
+
+    /**
+     * Determine if the given value is a reserved name/slug (ARCH-ROUTING-4).
+     */
+    public static function isReserved(string $value): bool
+    {
+        return in_array(strtolower(trim($value)), (new self)->reservedNames(), true);
     }
 
     /**

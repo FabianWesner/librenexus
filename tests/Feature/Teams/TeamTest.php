@@ -1,8 +1,11 @@
 <?php
 
+use App\Actions\Teams\CreateTeam;
 use App\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\User;
+use App\Rules\TeamName;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 test('teams index page can be rendered', function () {
@@ -88,7 +91,7 @@ test('teams cannot be updated by members', function () {
     $team = Team::factory()->create();
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
-    $team->members()->attach($member, ['role' => TeamRole::Member->value]);
+    $team->members()->attach($member, ['role' => TeamRole::Staff->value]);
 
     $this->actingAs($member);
 
@@ -213,7 +216,7 @@ test('deleting team switches other affected users to their personal team', funct
 
     $team = Team::factory()->create();
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
-    $team->members()->attach($member, ['role' => TeamRole::Member->value]);
+    $team->members()->attach($member, ['role' => TeamRole::Staff->value]);
 
     $owner->update(['current_team_id' => $team->id]);
     $member->update(['current_team_id' => $team->id]);
@@ -252,7 +255,7 @@ test('teams cannot be deleted by non owners', function () {
     $team = Team::factory()->create();
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
-    $team->members()->attach($member, ['role' => TeamRole::Member->value]);
+    $team->members()->attach($member, ['role' => TeamRole::Staff->value]);
 
     $this->actingAs($member);
 
@@ -267,3 +270,13 @@ test('guests cannot access teams', function () {
 
     $response->assertRedirect(route('login'));
 });
+
+test('auto-generated slugs never shadow a reserved path', function (string $name) {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $team = app(CreateTeam::class)->handle($user, $name);
+
+    expect(TeamName::isReserved($team->slug))->toBeFalse()
+        ->and($team->slug)->not->toBe(Str::slug($name));
+})->with(['Pricing', 'Login', 'Book', 'Health', 'Settings']);

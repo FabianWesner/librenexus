@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Teams\DeleteUserWithTenants;
 use App\Concerns\PasswordValidationRules;
 use App\Livewire\Actions\Logout;
 use Illuminate\Support\Facades\Auth;
@@ -11,15 +12,23 @@ new class extends Component {
     public string $password = '';
 
     /**
-     * Delete the currently authenticated user.
+     * Delete the currently authenticated user along with their personal
+     * tenant (FR-TENANT-10). Blocked while they are the sole owner of a
+     * non-personal team.
      */
-    public function deleteUser(Logout $logout): void
+    public function deleteUser(Logout $logout, DeleteUserWithTenants $deleteUserWithTenants): void
     {
         $this->validate([
             'password' => $this->currentPasswordRules(),
         ]);
 
-        tap(Auth::user(), $logout(...))->delete();
+        $user = Auth::user();
+
+        $deleteUserWithTenants->ensureUserIsNotSoleOwner($user);
+
+        $logout();
+
+        $deleteUserWithTenants->handle($user);
 
         $this->redirect('/', navigate: true);
     }
@@ -34,6 +43,10 @@ new class extends Component {
                 {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
             </flux:subheading>
         </div>
+
+        @error('account')
+            <p class="text-sm text-red-600 dark:text-red-400" data-test="delete-user-blocked-message">{{ $message }}</p>
+        @enderror
 
         <flux:input wire:model="password" :label="__('Password')" type="password" viewable />
 

@@ -17,7 +17,7 @@ new class extends Component {
 
     public string $inviteEmail = '';
 
-    public string $inviteRole = 'member';
+    public string $inviteRole = 'staff';
 
     public function mount(Team $team): void
     {
@@ -30,14 +30,17 @@ new class extends Component {
 
         $validated = $this->validate([
             'inviteEmail' => ['required', 'string', 'email', 'max:255', new UniqueTeamInvitation($this->team)],
-            'inviteRole' => ['required', 'string', Rule::enum(TeamRole::class)],
+            // Owner is never assignable via invitation (FR-TENANT-5); ownership
+            // is granted only through the explicit transfer flow.
+            'inviteRole' => ['required', 'string', Rule::enum(TeamRole::class)->except(TeamRole::Owner)],
         ]);
 
         $invitation = $this->team->invitations()->create([
             'email' => $validated['inviteEmail'],
             'role' => TeamRole::from($validated['inviteRole']),
             'invited_by' => Auth::id(),
-            'expires_at' => now()->addDays(3),
+            // Invitations expire after 7 days (FR-TENANT-6, docs/assumptions.md).
+            'expires_at' => now()->addDays(7),
         ]);
 
         Notification::route('mail', $invitation->email)

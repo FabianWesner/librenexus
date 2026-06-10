@@ -19,6 +19,15 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property string $slug
  * @property bool $is_personal
+ * @property string $timezone
+ * @property string|null $contact_email
+ * @property string $locale
+ * @property string $currency
+ * @property int $minimum_lead_time_minutes
+ * @property int $booking_horizon_days
+ * @property int $cancellation_cutoff_minutes
+ * @property int $reminder_lead_time_hours
+ * @property bool $requires_approval
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
@@ -26,7 +35,20 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Membership> $memberships
  * @property-read Collection<int, User> $members
  */
-#[Fillable(['name', 'slug', 'is_personal'])]
+#[Fillable([
+    'name',
+    'slug',
+    'is_personal',
+    'timezone',
+    'contact_email',
+    'locale',
+    'currency',
+    'minimum_lead_time_minutes',
+    'booking_horizon_days',
+    'cancellation_cutoff_minutes',
+    'reminder_lead_time_hours',
+    'requires_approval',
+])]
 class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */
@@ -34,6 +56,10 @@ class Team extends Model
 
     /**
      * Bootstrap the model and its traits.
+     *
+     * The slug is generated once at creation and stays stable on rename so
+     * shared booking URLs never silently break (FR-BOOK-1); it only changes
+     * when explicitly edited in the tenant settings (FR-TENANT-8).
      */
     protected static function boot(): void
     {
@@ -42,12 +68,6 @@ class Team extends Model
         static::creating(function (Team $team) {
             if (empty($team->slug)) {
                 $team->slug = static::generateUniqueTeamSlug($team->name);
-            }
-        });
-
-        static::updating(function (Team $team) {
-            if ($team->isDirty('name')) {
-                $team->slug = static::generateUniqueTeamSlug($team->name, $team->id);
             }
         });
     }
@@ -60,6 +80,19 @@ class Team extends Model
         return $this->members()
             ->wherePivot('role', TeamRole::Owner->value)
             ->first();
+    }
+
+    /**
+     * Determine if the given user is the only owner of this team
+     * (FR-TENANT-9: a team always keeps at least one owner).
+     */
+    public function isLastOwner(User $user): bool
+    {
+        $owners = $this->memberships()
+            ->where('role', TeamRole::Owner->value)
+            ->pluck('user_id');
+
+        return $owners->count() === 1 && $owners->first() === $user->id;
     }
 
     /**
@@ -104,6 +137,11 @@ class Team extends Model
     {
         return [
             'is_personal' => 'boolean',
+            'minimum_lead_time_minutes' => 'integer',
+            'booking_horizon_days' => 'integer',
+            'cancellation_cutoff_minutes' => 'integer',
+            'reminder_lead_time_hours' => 'integer',
+            'requires_approval' => 'boolean',
         ];
     }
 

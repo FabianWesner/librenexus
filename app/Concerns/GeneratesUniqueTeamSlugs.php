@@ -3,6 +3,7 @@
 namespace App\Concerns;
 
 use App\Models\Team;
+use App\Rules\TeamName;
 use Illuminate\Support\Str;
 
 trait GeneratesUniqueTeamSlugs
@@ -39,8 +40,16 @@ trait GeneratesUniqueTeamSlugs
             ->filter(fn (?int $suffix) => $suffix !== null)
             ->max() ?? 0;
 
-        return $existingSlugs->isEmpty()
+        // A generated slug must never shadow a static route (ARCH-ROUTING-4,
+        // ARCH-ROUTING-5), so reserved candidates fall through to a suffix.
+        $candidate = $existingSlugs->isEmpty() && ! TeamName::isReserved($defaultSlug)
             ? $defaultSlug
-            : $defaultSlug.'-'.($maxSuffix + 1);
+            : $defaultSlug.'-'.(++$maxSuffix);
+
+        while (TeamName::isReserved($candidate)) {
+            $candidate = $defaultSlug.'-'.(++$maxSuffix);
+        }
+
+        return $candidate;
     }
 }

@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 trait HasTeams
 {
@@ -74,6 +75,15 @@ trait HasTeams
         return $this->teams()
             ->where('is_personal', true)
             ->first();
+    }
+
+    /**
+     * Get the default name for the user's personal team (FR-TENANT-1),
+     * derived from the first word of their name.
+     */
+    public function personalTeamName(): string
+    {
+        return Str::before(trim($this->name), ' ')."'s Office";
     }
 
     /**
@@ -165,17 +175,7 @@ trait HasTeams
      */
     public function toTeamPermissions(Team $team): TeamPermissions
     {
-        $role = $this->teamRole($team);
-
-        return new TeamPermissions(
-            canUpdateTeam: $role?->hasPermission(TeamPermission::UpdateTeam) ?? false,
-            canDeleteTeam: $role?->hasPermission(TeamPermission::DeleteTeam) ?? false,
-            canAddMember: $role?->hasPermission(TeamPermission::AddMember) ?? false,
-            canUpdateMember: $role?->hasPermission(TeamPermission::UpdateMember) ?? false,
-            canRemoveMember: $role?->hasPermission(TeamPermission::RemoveMember) ?? false,
-            canCreateInvitation: $role?->hasPermission(TeamPermission::CreateInvitation) ?? false,
-            canCancelInvitation: $role?->hasPermission(TeamPermission::CancelInvitation) ?? false,
-        );
+        return new TeamPermissions($this->teamRole($team));
     }
 
     public function fallbackTeam(?Team $excluding = null): ?Team

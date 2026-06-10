@@ -118,6 +118,29 @@ already know the resource exists. Documented choice per Epic 03 notes.
 - v1 has no user file uploads (SEC-UPLOAD-1: not applicable).
 - UI language: English only.
 
+## Tenancy (Epic 03)
+
+- Multiple co-owners are legal (FR-TENANT-9 only demands "at least one
+  owner"). Promoting a member to owner is allowed; "transfer ownership"
+  demotes every other owner to admin so exactly one owner remains.
+- Account deletion is blocked while the user is the sole owner of ANY
+  non-personal tenant (the stricter reading of FR-TENANT-10), regardless of
+  whether that tenant still has other members.
+- Tenant slugs are stable: renaming a tenant never changes the slug
+  (shared booking URLs keep working, FR-BOOK-1); the slug itself is editable
+  in tenant settings with format, uniqueness, and reserved-name validation.
+- Supported currencies in the settings UI: EUR, USD, GBP, CHF (ISO 4217;
+  v1 list, easily extended). Locale list: English only (v1).
+- AC-9's "removing a member linked to a staff record unlinks but preserves
+  the staff record" can only be fully exercised once the Staff model exists;
+  Epic 04 adds the staff-unlink-on-removal behavior and its test. The member
+  removal itself (with last-owner guard) ships in Epic 03.
+- `Membership` and `TeamInvitation` carry `team_id` but are deliberately NOT
+  under the `BelongsToTenant` scope: they are the membership fabric itself,
+  accessed before/while establishing tenant context (switcher, accept flow)
+  and guarded by policies instead. The arch test allowlists exactly these
+  two classes.
+
 ## Auth (Epic 02)
 
 - Password policy (SEC-AUTH-2): production enforces min 12 chars, mixed case,
@@ -177,3 +200,7 @@ Tracked per definition-of-done.md (Medium/Low only). Currently empty.
 | 02 | `Password::defaults` branches on `isProduction()` (ARCH-CONFIG-2); strict policy untested | Medium | Move to config-driven policy or add a config-forced test in Epic 10. |
 | 02 | Throttled logins show the framework 429 page, not an inline form message | Medium | Consider an inline message in Epic 10 polish (SEC-RATE-2 is still met: clear, non-leaky). |
 | 02 | No explicit session-fixation regeneration assertion | Low | Add assertion in Epic 10 hardening (framework default behavior). |
+| 03 | Member-role update logic lives inline in the teams edit component | Medium | Extract into an Action when Epic 04 touches member flows, or by Epic 10. |
+| 03 | Team switcher reads one role query per team (small bounded 1+N) | Medium | Read role from the loaded pivot + add a query-count assertion in Epic 04. |
+| 03 | Invitation accepted via GET; invite codes stored in plaintext | Low | Revisit in Epic 10 hardening (codes are 64-char random, single-use, expiring). |
+| 03 | declineInvitation path untested; teams edit component oversized | Low | Cover/refactor by Epic 10. |

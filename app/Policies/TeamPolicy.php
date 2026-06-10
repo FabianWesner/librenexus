@@ -81,6 +81,14 @@ class TeamPolicy
     }
 
     /**
+     * Determine whether the user can transfer ownership of the team.
+     */
+    public function transferOwnership(User $user, Team $team): bool
+    {
+        return ! $team->is_personal && $user->hasTeamPermission($team, TeamPermission::TransferOwnership);
+    }
+
+    /**
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, Team $team): bool

@@ -6,6 +6,7 @@ enum TeamPermission: string
 {
     case UpdateTeam = 'team:update';
     case DeleteTeam = 'team:delete';
+    case TransferOwnership = 'team:transfer-ownership';
 
     case AddMember = 'member:add';
     case UpdateMember = 'member:update';

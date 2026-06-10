@@ -70,14 +70,14 @@ new #[Title('Teams')] class extends Component {
                     </div>
 
                     <div class="flex items-center gap-1">
-                        <flux:tooltip :content="$team->role === 'member' ? __('View team') : __('Edit team')">
+                        <flux:tooltip :content="$team->role === 'staff' ? __('View team') : __('Edit team')">
                             <flux:button
                                 variant="ghost"
                                 size="sm"
-                                :icon="$team->role === 'member' ? 'eye' : 'pencil'"
+                                :icon="$team->role === 'staff' ? 'eye' : 'pencil'"
                                 :href="route('teams.edit', $team->slug)"
                                 wire:navigate
-                                :data-test="$team->role === 'member' ? 'team-view-button' : 'team-edit-button'"
+                                :data-test="$team->role === 'staff' ? 'team-view-button' : 'team-edit-button'"
                             />
                         </flux:tooltip>
                     </div>

@@ -11,7 +11,7 @@ test('team member role can be updated by owner', function () {
     $team = Team::factory()->create();
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
-    $team->members()->attach($member, ['role' => TeamRole::Member->value]);
+    $team->members()->attach($member, ['role' => TeamRole::Staff->value]);
 
     $this->actingAs($owner);
 
@@ -30,7 +30,7 @@ test('team member role cannot be updated by non owner', function () {
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
     $team->members()->attach($admin, ['role' => TeamRole::Admin->value]);
-    $team->members()->attach($member, ['role' => TeamRole::Member->value]);
+    $team->members()->attach($member, ['role' => TeamRole::Staff->value]);
 
     $this->actingAs($admin);
 
@@ -45,7 +45,7 @@ test('team member can be removed by owner', function () {
     $team = Team::factory()->create();
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
-    $team->members()->attach($member, ['role' => TeamRole::Member->value]);
+    $team->members()->attach($member, ['role' => TeamRole::Staff->value]);
 
     $this->actingAs($owner);
 
@@ -65,7 +65,7 @@ test('team member cannot be removed by non owners', function () {
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
     $team->members()->attach($admin, ['role' => TeamRole::Admin->value]);
-    $team->members()->attach($member, ['role' => TeamRole::Member->value]);
+    $team->members()->attach($member, ['role' => TeamRole::Staff->value]);
 
     $this->actingAs($admin);
 
@@ -82,7 +82,7 @@ test('removed members current team is set to personal team', function () {
     $team = Team::factory()->create();
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
-    $team->members()->attach($member, ['role' => TeamRole::Member->value]);
+    $team->members()->attach($member, ['role' => TeamRole::Staff->value]);
 
     $member->update(['current_team_id' => $team->id]);
 

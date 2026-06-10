@@ -6,7 +6,7 @@ enum TeamRole: string
 {
     case Owner = 'owner';
     case Admin = 'admin';
-    case Member = 'member';
+    case Staff = 'staff';
 
     /**
      * Get the display label for the role.
@@ -30,7 +30,7 @@ enum TeamRole: string
                 TeamPermission::CreateInvitation,
                 TeamPermission::CancelInvitation,
             ],
-            self::Member => [],
+            self::Staff => [],
         };
     }
 
@@ -51,7 +51,7 @@ enum TeamRole: string
         return match ($this) {
             self::Owner => 3,
             self::Admin => 2,
-            self::Member => 1,
+            self::Staff => 1,
         };
     }
 

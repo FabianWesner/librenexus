@@ -59,8 +59,8 @@
 
 | ID | Severity | Rule | Location | Description | Required fix |
 |----|----------|------|----------|-------------|--------------|
-| F1 | Low | test hygiene / NFR-MAINT | `tests/Feature/Settings/SecurityTest.php:7` | Empty `beforeEach(function () {});` is dead code (PHPMD does not cover `tests/`, so no gate catches it) | Delete the empty closure |
-| F2 | Low | NFR-MAINT | `tests/Feature/Settings/SecurityTest.php:44` | Empty test body; the quality dimension (dead/misleading code) is noted here, while the coverage consequence is the QA/Product High finding | Implement or remove together with the QA F1 fix |
+| F1 | Low | test hygiene / NFR-MAINT | `tests/Feature/Settings/SecurityTest.php:7` | Empty `beforeEach(function () {});` is dead code (PHPMD does not cover `tests/`, so no gate catches it) | Delete the empty closure. **Status: RESOLVED (verified in re-review)** |
+| F2 | Low | NFR-MAINT | `tests/Feature/Settings/SecurityTest.php:44` | Empty test body; the quality dimension (dead/misleading code) is noted here, while the coverage consequence is the QA/Product High finding | Implement or remove together with the QA F1 fix. **Status: RESOLVED (verified in re-review)** |
 | F3 | Low | consistency | `resources/views/flux/*` | Published Flux stub overrides will drift from upstream on package updates; diffs are currently minimal and purposeful (contrast fixes) | Re-diff the stubs against upstream on Flux upgrades; consider documenting the changed lines |
 
 ## Required fixes (blocking)
