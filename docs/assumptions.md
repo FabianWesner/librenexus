@@ -118,6 +118,25 @@ already know the resource exists. Documented choice per Epic 03 notes.
 - v1 has no user file uploads (SEC-UPLOAD-1: not applicable).
 - UI language: English only.
 
+## Auth (Epic 02)
+
+- Password policy (SEC-AUTH-2): production enforces min 12 chars, mixed case,
+  numbers, symbols, and the compromised-password (uncompromised) check; other
+  environments use the framework minimum of 8 so tests stay offline. The
+  production branch lives in `AppServiceProvider::configureDefaults()`.
+- The email-verification notice keeps Fortify's default URI `/email/verify`
+  (named `verification.notice`); spec URLs are intent, not final strings
+  (pages.md). The `email` top-level segment joins the reserved-slug set
+  automatically via the route-derived reserved list.
+- Throttle limits: login 5/min per email+IP, two-factor challenge 5/min per
+  login session, password-reset link requests 5/min per IP (plus the framework
+  per-email 60 s broker throttle). Throttled responses are the framework 429
+  page.
+- Full WebAuthn passkey ceremonies cannot run in feature tests; coverage =
+  passkey listing/deletion, cross-user denial, invalid-assertion handling,
+  and the vendor-tested Fortify passkeys feature. Browser-level passkey
+  registration is not automated (documented limitation).
+
 ## Public site (Epic 01)
 
 - The homepage's secondary CTA ("See a demo booking page") links to the docs
@@ -153,4 +172,8 @@ Tracked per definition-of-done.md (Medium/Low only). Currently empty.
 | Epic | Finding | Severity | Plan |
 |------|---------|----------|------|
 | 00 | CSP keeps `unsafe-inline`/`unsafe-eval` for Livewire/Alpine/Flux | Medium | Revisit tightening (nonces) in Epic 10 hardening; justified inline in `SetSecurityHeaders`. |
-| 00 | Overall line coverage 76.8% (starter-kit baseline, < 80%) | Medium | Closed progressively per epic; blocking at Phase 6 / Epic 10 per quality-gates baseline rules. |
+| 00 | Overall line coverage 76.8% (starter-kit baseline, < 80%) | Medium | 79.3% after Epic 02; remaining gap is Epic 03 teams scaffolding. Blocking at Phase 6 / Epic 10. |
+| 01 | `APP_REPOSITORY_URL` placeholder 404s until repo is public | Medium | Confirm real URL in Epic 10 proof package. |
+| 02 | `Password::defaults` branches on `isProduction()` (ARCH-CONFIG-2); strict policy untested | Medium | Move to config-driven policy or add a config-forced test in Epic 10. |
+| 02 | Throttled logins show the framework 429 page, not an inline form message | Medium | Consider an inline message in Epic 10 polish (SEC-RATE-2 is still met: clear, non-leaky). |
+| 02 | No explicit session-fixation regeneration assertion | Low | Add assertion in Epic 10 hardening (framework default behavior). |

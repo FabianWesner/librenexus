@@ -15,7 +15,7 @@ MUTATION_MIN ?= 70
 # Public pages checked for accessibility and performance budgets.
 # Extend PUBLIC_PATHS as public pages are added (see specs/pages.md);
 # PUBLIC_URLS derives from APP_URL so CI only needs to override APP_URL.
-PUBLIC_PATHS ?= / /pricing /docs /open-source /privacy /imprint
+PUBLIC_PATHS ?= / /pricing /docs /open-source /privacy /imprint /login /register /forgot-password
 PUBLIC_URLS ?= $(foreach path,$(PUBLIC_PATHS),$(APP_URL)$(path))
 
 # Chrome binary for pa11y and Lighthouse. Locally falls back to the

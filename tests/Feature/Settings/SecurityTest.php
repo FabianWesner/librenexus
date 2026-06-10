@@ -4,8 +4,6 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 
-beforeEach(function () {});
-
 test('security settings page can be rendered', function () {
     $user = User::factory()->create();
 
@@ -40,7 +38,23 @@ test('security settings page renders without two factor when feature is disabled
         ->assertDontSee('Two-factor authentication');
 });
 
-test('two factor authentication disabled when confirmation abandoned between requests', function () {});
+test('two factor authentication disabled when confirmation abandoned between requests', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->post('/user/two-factor-authentication');
+
+    expect($user->refresh()->two_factor_secret)->not->toBeNull();
+
+    // A fresh mount of the security page abandons the pending, unconfirmed
+    // setup and discards the secret.
+    Livewire::withoutLazyLoading()
+        ->actingAs($user)
+        ->test('pages::settings.security');
+
+    expect($user->refresh()->two_factor_secret)->toBeNull();
+});
 
 test('password can be updated', function () {
     $user = User::factory()->create([
