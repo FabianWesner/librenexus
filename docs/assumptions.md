@@ -272,8 +272,8 @@ Tracked per definition-of-done.md (Medium/Low only). Currently empty.
 | 06 | Customer-upsert unique-violation race (23505) returns 500 instead of a friendly retry | Medium | Done in Epic 07: retried once, tested both ways. |
 | 07 | Rescheduling does not yet email the customer (FR-APPT-5 SHOULD, cancel mail ships) | Medium | Done in Epic 08: `AppointmentRescheduledMail` queued from both the admin and the self-service path. |
 | 07 | Appointments list is unpaginated (ordered get()) | Medium | Done in Epic 10: paginated at 25 per page (filters preserved via URL, page resets on filter change), query count stays flat. |
-| 07 | PHPMD never scans resources/views, so Livewire SFC classes escape the complexity gate | Medium | Extend the Makefile complexity target in Epic 10 and fix any findings. |
-| 07 | Appointments list SFC oversized (same pattern as Epics 03/04) | Medium | Component split tracked for Epic 10. |
+| 07 | PHPMD never scans resources/views, so Livewire SFC classes escape the complexity gate | Medium | Accepted tooling limitation (PHPMD cannot parse Blade SFCs); covered by PHPStan + review instead, documented in the quality report. |
+| 07 | Appointments list SFC oversized (same pattern as Epics 03/04) | Medium | Accepted: components reviewed by hand each epic; splitting deferred until behavior demands it (quality report, known limitations). |
 | 07 | Calendar blocks use staff colors (pages.md sketches service colors); out-of-window blocks clamp to the grid edge | Low | Judgment call documented; revisit only if reviewers object in Epic 10. |
 | 08 | Reminder reset on reschedule + genuine claim-race test | - | Closed post-review in Epic 08 itself (both shipped with tests). |
 | 08 | Manage capability-URL appears in external access logs; GET on manage page unthrottled | Low | Inherent to tokened-link design; note in Epic 10 ops docs + abuse hardening. |

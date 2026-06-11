@@ -198,5 +198,5 @@ checkout with PostgreSQL, Node, PHP 8.4, and the documented tools.
 | Architecture | **production-quality** | three load-bearing ADRs implemented and arch-test enforced; pure domain core; one deployable |
 | Security | **production-quality** | fail-closed isolation, DB-level booking integrity, hashed capability tokens, all scanners clean; CSP trade-off documented |
 | UX & accessibility | **production-quality** | WCAG2AA zero errors on all public URLs, axe on all authenticated families, styleguide followed |
-| Performance & reliability | **solid MVP+** | budgets met and N+1-proven, but no load testing (honest cap) |
+| Performance & reliability | **solid MVP** | budgets met and N+1-proven; capped below production-quality because no load testing was performed |
 | Documentation & reproducibility | **production-quality** | one-command benchmark, pinned tools, ADRs, assumption log, per-epic reviews, this report |
