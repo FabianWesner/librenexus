@@ -409,6 +409,78 @@ describe('customers and appointments isolation (Epic 06)', function () {
     });
 });
 
+describe('appointment management isolation (Epic 07)', function () {
+    beforeEach(function () {
+        $staffB = Staff::factory()->create(['team_id' => $this->teamB->id]);
+        $serviceB = Service::factory()->create(['team_id' => $this->teamB->id]);
+        $customerB = Customer::factory()->create(['team_id' => $this->teamB->id]);
+
+        $this->appointmentB = Appointment::factory()
+            ->for($this->teamB, 'team')->for($staffB, 'staff')->for($serviceB, 'service')->for($customerB, 'customer')
+            ->create();
+    });
+
+    test('a member of tenant A gets a 404 on tenant B appointment pages', function () {
+        $this->actingAs($this->ownerA)
+            ->get(route('appointments.index', ['current_team' => $this->teamB->slug]))
+            ->assertNotFound();
+
+        $this->actingAs($this->ownerA)
+            ->get(route('calendar.index', ['current_team' => $this->teamB->slug]))
+            ->assertNotFound();
+    });
+
+    test('a member of tenant A cannot mount the appointment pages for tenant B', function () {
+        $this->actingAs($this->ownerA);
+
+        Livewire::test('pages::appointments.index', ['current_team' => $this->teamB])
+            ->assertForbidden();
+
+        Livewire::test('pages::appointments.calendar', ['current_team' => $this->teamB])
+            ->assertForbidden();
+    });
+
+    test('tenant B appointments cannot be viewed, transitioned, or rescheduled from tenant A', function () {
+        app(CurrentTenant::class)->set($this->teamA);
+        $this->actingAs($this->ownerA);
+
+        $component = fn () => Livewire::test('pages::appointments.index', ['current_team' => $this->teamA]);
+
+        // The tenant scope hides foreign records entirely, so reads and
+        // mutations fail with a not-found (rendered as a 404 over HTTP).
+        expect(fn () => $component()->call('openDetail', $this->appointmentB->id))
+            ->toThrow(ModelNotFoundException::class);
+        expect(fn () => $component()->call('transitionStatus', $this->appointmentB->id, 'cancelled'))
+            ->toThrow(ModelNotFoundException::class);
+        expect(fn () => $component()->call('openRescheduleModal', $this->appointmentB->id))
+            ->toThrow(ModelNotFoundException::class);
+        expect(fn () => $component()->call('openCancelModal', $this->appointmentB->id))
+            ->toThrow(ModelNotFoundException::class);
+
+        $untouched = $this->appointmentB->fresh();
+
+        expect($untouched->status)->toBe($this->appointmentB->status)
+            ->and($untouched->starts_at->equalTo($this->appointmentB->starts_at))->toBeTrue();
+    });
+
+    test('tenant B appointments never appear in tenant A list or calendar queries', function () {
+        app(CurrentTenant::class)->set($this->teamA);
+        $this->actingAs($this->ownerA);
+
+        $listComponent = Livewire::test('pages::appointments.index', ['current_team' => $this->teamA])
+            ->set('fromDate', '')
+            ->set('untilDate', '');
+
+        expect($listComponent->instance()->appointments)->toBeEmpty();
+
+        $calendarComponent = Livewire::test('pages::appointments.calendar', ['current_team' => $this->teamA]);
+
+        foreach ($calendarComponent->instance()->dayColumns as $column) {
+            expect($column['blocks'])->toBeEmpty();
+        }
+    });
+});
+
 test('the tenant middleware is registered as Livewire persistent middleware', function () {
     // Guards the AppServiceProvider registration that re-establishes the
     // CurrentTenant context on Livewire update requests (SEC-TENANT).

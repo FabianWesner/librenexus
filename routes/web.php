@@ -33,6 +33,8 @@ Route::prefix('{current_team}')
         Route::livewire('staff', 'pages::staff.index')->name('staff.index');
         Route::livewire('staff/{staff}/availability', 'pages::staff.availability')->name('staff.availability');
         Route::livewire('services', 'pages::services.index')->name('services.index');
+        Route::livewire('appointments', 'pages::appointments.index')->name('appointments.index');
+        Route::livewire('calendar', 'pages::appointments.calendar')->name('calendar.index');
     });
 
 Route::middleware(['auth', 'verified'])->group(function () {

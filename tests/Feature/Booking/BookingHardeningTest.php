@@ -1,19 +1,27 @@
 <?php
 
+use App\Actions\Availability\ComputeSlots;
+use App\Actions\Availability\GetBookableSlots;
 use App\Actions\Booking\BookAppointment;
+use App\Data\BookedAppointment;
 use App\Data\BookingRequest;
 use App\Data\CurrentTenant;
+use App\Data\Slot;
 use App\Enums\AppointmentStatus;
+use App\Exceptions\SlotNoLongerAvailableException;
 use App\Http\Middleware\ResolvePublicTenant;
 use App\Mail\AppointmentConfirmationMail;
+use App\Models\Appointment;
 use App\Models\AvailabilityRule;
 use App\Models\Customer;
 use App\Models\Service;
 use App\Models\Staff;
 use App\Models\Team;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
+use Illuminate\Support\Collection;
 
 /**
  * Booking is critical domain logic (test-plan.md): these tests pin down the
@@ -137,6 +145,107 @@ test('the customer model itself normalizes email on assignment', function () {
     ]);
 
     expect($customer->refresh()->email)->toBe('padded@example.com');
+});
+
+/**
+ * @return QueryException with SQLSTATE 23505
+ */
+function uniqueViolationException(): QueryException
+{
+    $pdoException = new PDOException('duplicate key value violates unique constraint');
+    $pdoException->errorInfo = ['23505', 7, 'duplicate key value'];
+
+    $codeProperty = new ReflectionProperty(Exception::class, 'code');
+    $codeProperty->setValue($pdoException, '23505');
+
+    return new QueryException('pgsql', 'insert into "customers" ...', [], $pdoException);
+}
+
+test('a customer unique-violation race is retried once and succeeds', function () {
+    $raceOnce = new class(app(GetBookableSlots::class)) extends BookAppointment
+    {
+        public int $attempts = 0;
+
+        protected function attempt(Team $team, BookingRequest $request): BookedAppointment
+        {
+            $this->attempts++;
+
+            if ($this->attempts === 1) {
+                throw uniqueViolationException();
+            }
+
+            return parent::attempt($team, $request);
+        }
+    };
+
+    $booked = $raceOnce->handle($this->team, hardeningRequest($this->slotStart, $this->service, $this->staff->id));
+
+    expect($raceOnce->attempts)->toBe(2)
+        ->and($booked->appointment->exists)->toBeTrue()
+        ->and(Customer::query()->count())->toBe(1);
+});
+
+test('a non-unique-violation query exception is rethrown, not retried', function () {
+    $alwaysFails = new class(app(GetBookableSlots::class)) extends BookAppointment
+    {
+        public int $attempts = 0;
+
+        protected function attempt(Team $team, BookingRequest $request): BookedAppointment
+        {
+            $this->attempts++;
+
+            $pdoException = new PDOException('connection lost');
+            $pdoException->errorInfo = ['08006', 7, 'connection lost'];
+
+            $codeProperty = new ReflectionProperty(Exception::class, 'code');
+            $codeProperty->setValue($pdoException, '08006');
+
+            throw new QueryException('pgsql', 'insert ...', [], $pdoException);
+        }
+    };
+
+    expect(fn () => $alwaysFails->handle($this->team, hardeningRequest($this->slotStart, $this->service, $this->staff->id)))
+        ->toThrow(QueryException::class);
+
+    expect($alwaysFails->attempts)->toBe(1);
+});
+
+test('a constraint-level lost race is translated to the friendly slot error', function () {
+    // Occupy the slot for real.
+    app(BookAppointment::class)->handle($this->team, hardeningRequest($this->slotStart, $this->service, $this->staff->id));
+
+    // An engine that wrongly reports the slot as free simulates the race
+    // window after re-validation: the exclusion constraint must be the
+    // final arbiter and the 23P01 must surface as the friendly error.
+    $blindEngine = new class(app(ComputeSlots::class)) extends GetBookableSlots
+    {
+        public function handle(
+            Team $team,
+            Service $service,
+            ?Staff $staff,
+            string $fromDate,
+            string $untilDate,
+            ?CarbonImmutable $now = null,
+            ?int $excludeAppointmentId = null,
+        ): Collection {
+            $start = CarbonImmutable::parse($fromDate.'T09:00:00', 'UTC');
+
+            return collect([new Slot(
+                staffId: (int) $staff?->id,
+                startsAt: $start,
+                endsAt: $start->addMinutes(60),
+                bufferedStartsAt: $start,
+                bufferedEndsAt: $start->addMinutes(60),
+            )]);
+        }
+    };
+
+    $racingAction = new BookAppointment($blindEngine);
+
+    expect(fn () => $racingAction->handle($this->team, hardeningRequest($this->slotStart, $this->service, $this->staff->id, ['email' => 'loser@example.com'])))
+        ->toThrow(SlotNoLongerAvailableException::class, 'no longer available');
+
+    expect(Appointment::query()->count())->toBe(1);
 });
 
 test('the public tenant middleware sets the context and shares the team', function () {

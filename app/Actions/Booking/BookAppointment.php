@@ -29,9 +29,26 @@ class BookAppointment
 {
     private const string EXCLUSION_VIOLATION = '23P01';
 
+    private const string UNIQUE_VIOLATION = '23505';
+
     public function __construct(private GetBookableSlots $getBookableSlots) {}
 
     public function handle(Team $team, BookingRequest $request): BookedAppointment
+    {
+        try {
+            return $this->attempt($team, $request);
+        } catch (QueryException $exception) {
+            // Two first-time bookings with the same new email can race the
+            // customer unique index; on retry the existing row is reused.
+            if ($exception->getCode() === self::UNIQUE_VIOLATION) {
+                return $this->attempt($team, $request);
+            }
+
+            throw $exception;
+        }
+    }
+
+    protected function attempt(Team $team, BookingRequest $request): BookedAppointment
     {
         try {
             return DB::transaction(function () use ($team, $request): BookedAppointment {

@@ -37,6 +37,7 @@ class GetBookableSlots
         string $fromDate,
         string $untilDate,
         ?CarbonImmutable $now = null,
+        ?int $excludeAppointmentId = null,
     ): Collection {
         if (! $service->is_active) {
             return collect();
@@ -55,7 +56,7 @@ class GetBookableSlots
                 ->where('ends_at', '>', $rangeStart))
             ->get();
 
-        $reservedByStaff = $this->reservedRangesByStaff($bookableStaff, $rangeStart, $rangeEnd);
+        $reservedByStaff = $this->reservedRangesByStaff($bookableStaff, $rangeStart, $rangeEnd, $excludeAppointmentId);
 
         return $bookableStaff
             ->flatMap(fn (Staff $member): Collection => $this->computeSlots->handle(
@@ -90,6 +91,7 @@ class GetBookableSlots
         EloquentCollection $bookableStaff,
         CarbonImmutable $rangeStart,
         CarbonImmutable $rangeEnd,
+        ?int $excludeAppointmentId = null,
     ): Collection {
         if ($bookableStaff->isEmpty()) {
             return collect();
@@ -97,6 +99,9 @@ class GetBookableSlots
 
         return Appointment::query()
             ->reservingTime()
+            // A reschedule must not be blocked by the appointment it moves
+            // (FR-APPT-3, Epic 07).
+            ->when($excludeAppointmentId !== null, fn ($query) => $query->whereKeyNot($excludeAppointmentId))
             ->whereIn('staff_id', $bookableStaff->modelKeys())
             ->where('buffered_starts_at', '<', $rangeEnd)
             ->where('buffered_ends_at', '>', $rangeStart)

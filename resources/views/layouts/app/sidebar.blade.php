@@ -25,6 +25,14 @@
                     <flux:sidebar.item icon="briefcase" :href="route('services.index')" :current="request()->routeIs('services.index')" wire:navigate>
                         {{ __('Services') }}
                     </flux:sidebar.item>
+
+                    <flux:sidebar.item icon="calendar-days" :href="route('appointments.index')" :current="request()->routeIs('appointments.index')" wire:navigate>
+                        {{ __('Appointments') }}
+                    </flux:sidebar.item>
+
+                    <flux:sidebar.item icon="calendar" :href="route('calendar.index')" :current="request()->routeIs('calendar.index')" wire:navigate>
+                        {{ __('Calendar') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 

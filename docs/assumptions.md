@@ -246,7 +246,12 @@ Tracked per definition-of-done.md (Medium/Low only). Currently empty.
 | 04 | formattedPrice assumes 2-decimal currencies | Low | Fine for the v1 currency list (EUR/USD/GBP/CHF); note for future currencies. |
 | 05 | GetBookableSlots eager-loads time off unbounded by date range | Medium | Constrain by the requested window in Epic 06 before the public booking hot path. |
 | 05 | Engine has no guard against a non-positive packing step (unreachable via app validation) | Low | Done in Epic 06 (guard + tests). |
-| 06 | Customer-upsert unique-violation race (23505) returns 500 instead of a friendly retry | Medium | Translate alongside 23P01 in Epic 07 when reschedule shares the path. |
+| 06 | Customer-upsert unique-violation race (23505) returns 500 instead of a friendly retry | Medium | Done in Epic 07: retried once, tested both ways. |
+| 07 | Rescheduling does not yet email the customer (FR-APPT-5 SHOULD, cancel mail ships) | Medium | Deliver the reschedule notice with Epic 08's mail polish. |
+| 07 | Appointments list is unpaginated (ordered get()) | Medium | Paginate in Epic 09/10 before dashboards drive traffic to it. |
+| 07 | PHPMD never scans resources/views, so Livewire SFC classes escape the complexity gate | Medium | Extend the Makefile complexity target in Epic 10 and fix any findings. |
+| 07 | Appointments list SFC oversized (same pattern as Epics 03/04) | Medium | Component split tracked for Epic 10. |
+| 07 | Calendar blocks use staff colors (pages.md sketches service colors); out-of-window blocks clamp to the grid edge | Low | Judgment call documented; revisit only if reviewers object in Epic 10. |
 | 06 | Booking step actions before the final confirm are not rate limited | Medium | Throttle the step actions in Epic 10 abuse-hardening. |
 | 06 | Manage/confirmed pages lack hydrate() tenant re-establishment (no actions yet) | Medium | Required when Epic 08 adds cancel/reschedule actions. |
 | 06 | No query-count assertion on the booking page; full-horizon engine pass on step 3 entry | Low | Add with Epic 07's mandated N+1 tests. |
