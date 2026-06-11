@@ -216,6 +216,11 @@ jobs:
       - name: End-to-end tests (QG-E2E)
         run: make e2e
 
+      # The browser tests refresh the job's database, wiping the seeded demo
+      # tenant that the public accessibility/performance URLs depend on.
+      - name: Re-seed demo data
+        run: php artisan db:seed --force
+
       - name: Accessibility (QG-A11Y)
         run: make accessibility APP_URL="$APP_URL"
 
