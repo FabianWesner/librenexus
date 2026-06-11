@@ -50,11 +50,13 @@
                 @endforeach
             </ul>
             <p class="mt-4 max-w-prose text-sm text-zinc-600 dark:text-zinc-400">
-                The full results, including the final quality report, coverage and mutation
-                numbers, security scans, and the SBOM, are published in the repository under
-                <a href="{{ config('app.repository_url') }}/tree/main/docs" rel="noopener" class="font-medium text-brand-700 underline hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">docs/</a>
-                and
-                <a href="{{ config('app.repository_url') }}/tree/main/reports" rel="noopener" class="font-medium text-brand-700 underline hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">reports/</a>.
+                The full results live in the repository: the
+                <a href="{{ config('app.repository_url') }}/blob/main/docs/quality-report.md" rel="noopener" class="font-medium text-brand-700 underline hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">final quality report</a>
+                with coverage and mutation numbers, the per-epic
+                <a href="{{ config('app.repository_url') }}/tree/main/docs/reviews" rel="noopener" class="font-medium text-brand-700 underline hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">review reports</a>,
+                and the security scans and SBOM, which every
+                <a href="{{ config('app.repository_url') }}/actions" rel="noopener" class="font-medium text-brand-700 underline hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">CI run</a>
+                regenerates and uploads as artifacts.
             </p>
         </section>
 
