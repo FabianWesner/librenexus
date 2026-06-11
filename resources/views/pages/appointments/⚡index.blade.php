@@ -10,6 +10,7 @@ use App\Enums\AppointmentStatus;
 use App\Enums\TeamRole;
 use App\Exceptions\SlotNoLongerAvailableException;
 use App\Mail\AppointmentConfirmationMail;
+use App\Mail\AppointmentRescheduledMail;
 use App\Models\Appointment;
 use App\Models\Service;
 use App\Models\Staff;
@@ -190,6 +191,12 @@ new #[Title('Appointments')] class extends Component
                 'rescheduleSlot' => $exception->getMessage(),
             ]);
         }
+
+        // FR-APPT-5: the customer is told about the new time. The raw
+        // manage token is never stored, so the admin path sends the notice
+        // without a manage link; the customer keeps the link from their
+        // confirmation email.
+        Mail::to($appointment->customer->email)->queue(new AppointmentRescheduledMail($appointment));
 
         $this->rescheduleAppointmentId = null;
         unset($this->appointments, $this->rescheduleAppointment, $this->rescheduleSlots);

@@ -48,6 +48,9 @@ class RescheduleAppointment
                     'ends_at' => $slot->endsAt,
                     'buffered_starts_at' => $slot->bufferedStartsAt,
                     'buffered_ends_at' => $slot->bufferedEndsAt,
+                    // A moved appointment earns a fresh reminder for its new
+                    // time (FR-COMMS-3); an already-sent one no longer counts.
+                    'reminder_sent_at' => null,
                 ]);
 
                 return $appointment;

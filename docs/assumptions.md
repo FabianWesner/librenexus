@@ -65,10 +65,12 @@ already know the resource exists. Documented choice per Epic 03 notes.
 - The PostgreSQL connection pins `timezone => UTC` (config/database.php) so
   timestamp storage is UTC regardless of the server's session timezone
   (ARCH-DATA-2); a feature test asserts Berlin 10:00 stores as 08:00 UTC.
-- Three engine mutants are accepted as behaviorally equivalent, verified
-  case by case and documented in tests/Unit/SlotEngineTest.php (zero-width
-  window comparison; the two int casts on numeric strings). Every other
-  engine mutant is killed (engine mutation 95%+).
+- Four mutants are accepted as behaviorally equivalent, verified case by
+  case: three in the slot engine, documented in tests/Unit/SlotEngineTest.php
+  (zero-width window comparison; the two int casts on numeric strings), and
+  one in RescheduleAppointment (the staff_id update item: the engine is
+  pinned to the appointment's own staff, so the value never changes;
+  documented in its test). Every other mutant is killed.
 - Livewire page-component implicit binding runs before route middleware sets
   the tenant context, so tenant-scoped route models are resolved in mount()
   after EnsureTeamMembership has run (availability editor pattern).
@@ -119,6 +121,13 @@ already know the resource exists. Documented choice per Epic 03 notes.
   the caller re-establishes tenant context from the resolved appointment.
 - `make test`/`coverage`/`mutation`/`e2e` run PHP with `memory_limit=1G`
   (the suite outgrew the 128M CLI default); thresholds untouched.
+- Self-service reschedule follows the same cancellation cut-off as
+  cancellation (FR-TENANT-8 names one cut-off; a customer who can no longer
+  cancel should not be able to move the appointment either). Exactly at the
+  boundary the change is already refused. Admin/staff reschedule via the
+  appointments page is not cut-off bound (an internal action, FR-APPT-3).
+- The manage-page mutating actions (cancel, reschedule) are throttled at
+  20/min per IP with a clear retry message (SEC-RATE).
 
 ## Appointments (FR-APPT)
 
@@ -140,8 +149,15 @@ already know the resource exists. Documented choice per Epic 03 notes.
 - Mail driver in dev/test/CI: `log`/array fake. No real SMTP is configured;
   production would set MAIL_* env vars. Queued via the database queue.
 - Reminder idempotency: a `reminder_sent_at` timestamp on the appointment,
-  set when the reminder job runs; the scheduled command only selects
-  appointments with `reminder_sent_at IS NULL`.
+  claimed by a conditional single-row UPDATE (`... WHERE reminder_sent_at IS
+  NULL`); the mail is queued only when the update affected a row, so
+  concurrent command runs cannot double-send (FR-COMMS-3).
+- Reminder emails carry no manage link: the raw token is never stored
+  (SEC-TOKEN-1), so reminders point the customer at the manage link from
+  their confirmation email instead.
+- The reschedule notice includes the manage link only on the customer
+  self-service path (the page has the raw token from the URL); the admin
+  reschedule path queues the same mail without a link.
 
 ## Scope reductions / non-goals confirmed
 
@@ -247,11 +263,14 @@ Tracked per definition-of-done.md (Medium/Low only). Currently empty.
 | 05 | GetBookableSlots eager-loads time off unbounded by date range | Medium | Constrain by the requested window in Epic 06 before the public booking hot path. |
 | 05 | Engine has no guard against a non-positive packing step (unreachable via app validation) | Low | Done in Epic 06 (guard + tests). |
 | 06 | Customer-upsert unique-violation race (23505) returns 500 instead of a friendly retry | Medium | Done in Epic 07: retried once, tested both ways. |
-| 07 | Rescheduling does not yet email the customer (FR-APPT-5 SHOULD, cancel mail ships) | Medium | Deliver the reschedule notice with Epic 08's mail polish. |
+| 07 | Rescheduling does not yet email the customer (FR-APPT-5 SHOULD, cancel mail ships) | Medium | Done in Epic 08: `AppointmentRescheduledMail` queued from both the admin and the self-service path. |
 | 07 | Appointments list is unpaginated (ordered get()) | Medium | Paginate in Epic 09/10 before dashboards drive traffic to it. |
 | 07 | PHPMD never scans resources/views, so Livewire SFC classes escape the complexity gate | Medium | Extend the Makefile complexity target in Epic 10 and fix any findings. |
 | 07 | Appointments list SFC oversized (same pattern as Epics 03/04) | Medium | Component split tracked for Epic 10. |
 | 07 | Calendar blocks use staff colors (pages.md sketches service colors); out-of-window blocks clamp to the grid edge | Low | Judgment call documented; revisit only if reviewers object in Epic 10. |
+| 08 | Reminder reset on reschedule + genuine claim-race test | - | Closed post-review in Epic 08 itself (both shipped with tests). |
+| 08 | Manage capability-URL appears in external access logs; GET on manage page unthrottled | Low | Inherent to tokened-link design; note in Epic 10 ops docs + abuse hardening. |
+| 08 | Four mailables repeat the scalar-capture block | Low | Extract a shared base in Epic 10 if duplication gate ever complains. |
 | 06 | Booking step actions before the final confirm are not rate limited | Medium | Throttle the step actions in Epic 10 abuse-hardening. |
-| 06 | Manage/confirmed pages lack hydrate() tenant re-establishment (no actions yet) | Medium | Required when Epic 08 adds cancel/reschedule actions. |
+| 06 | Manage/confirmed pages lack hydrate() tenant re-establishment (no actions yet) | Medium | Done in Epic 08: the manage page re-resolves the appointment by token and re-sets the tenant on every Livewire request; the confirmed page still has no actions. |
 | 06 | No query-count assertion on the booking page; full-horizon engine pass on step 3 entry | Low | Add with Epic 07's mandated N+1 tests. |

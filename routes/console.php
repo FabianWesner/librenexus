@@ -9,3 +9,7 @@ Schedule::call(function () {
         ->where('expires_at', '<', now())
         ->delete();
 })->daily()->description('Delete expired team invitations');
+
+// FR-COMMS-3: queue reminder mails inside each team's reminder window. The
+// command claims each row idempotently, so the cadence only bounds latency.
+Schedule::command('appointments:send-reminders')->everyFifteenMinutes();
