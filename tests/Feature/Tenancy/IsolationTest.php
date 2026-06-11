@@ -4,7 +4,9 @@ use App\Concerns\BelongsToTenant;
 use App\Data\CurrentTenant;
 use App\Enums\TeamRole;
 use App\Http\Middleware\EnsureTeamMembership;
+use App\Models\Appointment;
 use App\Models\AvailabilityRule;
+use App\Models\Customer;
 use App\Models\Scopes\TenantScope;
 use App\Models\Service;
 use App\Models\Staff;
@@ -369,6 +371,41 @@ describe('availability isolation (Epic 05)', function () {
 
         expect(AvailabilityRule::query()->pluck('staff_id')->all())->toBe([$staffA->id])
             ->and(TimeOff::query()->count())->toBe(0);
+    });
+});
+
+describe('customers and appointments isolation (Epic 06)', function () {
+    beforeEach(function () {
+        $scaffold = function (Team $team, string $suffix): array {
+            $staff = Staff::factory()->create(['team_id' => $team->id]);
+            $service = Service::factory()->create(['team_id' => $team->id, 'name' => "Service {$suffix}"]);
+            $customer = Customer::factory()->create(['team_id' => $team->id, 'name' => "Customer {$suffix}"]);
+
+            $appointment = Appointment::factory()
+                ->for($team, 'team')->for($staff, 'staff')->for($service, 'service')->for($customer, 'customer')
+                ->create();
+
+            return [$customer, $appointment];
+        };
+
+        [$this->customerA, $this->appointmentA] = $scaffold($this->teamA, 'Alpha');
+        [$this->customerB, $this->appointmentB] = $scaffold($this->teamB, 'Beta');
+    });
+
+    test('tenant B customers and appointments never appear in tenant A queries', function () {
+        app(CurrentTenant::class)->set($this->teamA);
+
+        expect(Customer::query()->pluck('id')->all())->toBe([$this->customerA->id])
+            ->and(Appointment::query()->pluck('id')->all())->toBe([$this->appointmentA->id]);
+    });
+
+    test('a direct findOrFail on tenant B records under tenant A context fails', function () {
+        app(CurrentTenant::class)->set($this->teamA);
+
+        expect(fn () => Customer::query()->findOrFail($this->customerB->id))
+            ->toThrow(ModelNotFoundException::class);
+        expect(fn () => Appointment::query()->findOrFail($this->appointmentB->id))
+            ->toThrow(ModelNotFoundException::class);
     });
 });
 

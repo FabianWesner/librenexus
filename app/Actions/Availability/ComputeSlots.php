@@ -147,6 +147,13 @@ class ComputeSlots
             + $computation->serviceDurationMinutes
             + $computation->bufferAfterMinutes;
 
+        // Defensive: a non-positive step would never advance the cursor.
+        // Unreachable through app validation (duration >= 5), guarded so the
+        // pure engine can never loop forever on malformed input.
+        if ($stepMinutes < 1) {
+            return [];
+        }
+
         $start = $windowStart->addMinutes($computation->bufferBeforeMinutes);
 
         while (true) {

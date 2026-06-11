@@ -15,7 +15,7 @@ MUTATION_MIN ?= 70
 # Public pages checked for accessibility and performance budgets.
 # Extend PUBLIC_PATHS as public pages are added (see specs/pages.md);
 # PUBLIC_URLS derives from APP_URL so CI only needs to override APP_URL.
-PUBLIC_PATHS ?= / /pricing /docs /open-source /privacy /imprint /login /register /forgot-password
+PUBLIC_PATHS ?= / /pricing /docs /open-source /privacy /imprint /login /register /forgot-password /demo-clinic /manage/demo-manage-token
 PUBLIC_URLS ?= $(foreach path,$(PUBLIC_PATHS),$(APP_URL)$(path))
 
 # Chrome binary for pa11y and Lighthouse. Locally falls back to the
@@ -83,7 +83,7 @@ $(COMPOSER_UNUSED):
 	curl -sL "https://github.com/composer-unused/composer-unused/releases/download/$(COMPOSER_UNUSED_VERSION)/composer-unused.phar" -o $(COMPOSER_UNUSED)
 
 test: ## QG-TESTS: full Pest suite (unit + feature)
-	php artisan test --compact
+	php -d memory_limit=1G vendor/bin/pest --compact
 
 coverage: ## QG-COVERAGE: line coverage >= $(COVERAGE_MIN)%
 	$(COVERAGE_PHP) -d memory_limit=1G vendor/bin/pest --coverage --min=$(COVERAGE_MIN) --compact
@@ -93,7 +93,7 @@ mutation: ## QG-MUTATION: mutation score >= $(MUTATION_MIN)% (Pest --mutate)
 
 e2e: ## QG-E2E: Pest 4 browser tests (Playwright)
 	@if [ -d tests/Browser ]; then \
-		php artisan test --compact tests/Browser; \
+		php -d memory_limit=1G vendor/bin/pest --compact tests/Browser; \
 	else \
 		echo "WARNING: tests/Browser does not exist yet - E2E gate is REQUIRED before the app is done (specs/test-plan.md)"; \
 	fi

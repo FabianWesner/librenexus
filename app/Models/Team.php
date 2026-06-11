@@ -55,6 +55,23 @@ class Team extends Model
     use GeneratesUniqueTeamSlugs, HasFactory, SoftDeletes;
 
     /**
+     * In-memory defaults mirroring the database defaults (FR-TENANT-8), so
+     * a freshly created model carries the booking policy without a refresh.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'timezone' => 'UTC',
+        'locale' => 'en',
+        'currency' => 'EUR',
+        'minimum_lead_time_minutes' => 120,
+        'booking_horizon_days' => 60,
+        'cancellation_cutoff_minutes' => 120,
+        'reminder_lead_time_hours' => 24,
+        'requires_approval' => false,
+    ];
+
+    /**
      * Bootstrap the model and its traits.
      *
      * The slug is generated once at creation and stays stable on rename so

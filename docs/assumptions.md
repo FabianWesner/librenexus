@@ -100,6 +100,26 @@ already know the resource exists. Documented choice per Epic 03 notes.
   the pa11y/Lighthouse gates (Epic 09). Documented as intentionally
   non-secret demo data in `.gitleaks.toml` terms if flagged.
 
+## Booking (Epic 06)
+
+- "Any available" staff pick: the engine sorts slots by start time, ties by
+  ascending staff id, and booking takes the first match at the requested
+  instant. This supersedes the earlier "fewest appointments" idea; it is
+  simpler and equally deterministic (AC-7).
+- Manage token format: 48 lowercase alphanumerics + 16 hex chars (64 chars,
+  more than 32 bytes of CSPRNG entropy), stored only as a SHA-256 hash and
+  looked up by exact index match (SEC-TOKEN-1). The demo seeder's fixed
+  `demo-manage-token` is intentionally non-secret demo data.
+- The booking honeypot field silently drops bot submissions (no error
+  shown); rate limit 10/min per IP with a clear retry message (SEC-RATE-2).
+- The confirmation mail captures all content as scalars at queue time, so
+  queue workers never deserialize tenant-scoped models without context.
+- `Appointment::findByManageToken` uses `withoutGlobalScopes` by design: the
+  token is the credential, scoped to exactly one appointment (SEC-TOKEN-3);
+  the caller re-establishes tenant context from the resolved appointment.
+- `make test`/`coverage`/`mutation`/`e2e` run PHP with `memory_limit=1G`
+  (the suite outgrew the 128M CLI default); thresholds untouched.
+
 ## Appointments (FR-APPT)
 
 - Reschedule keeps the same appointment row (updates its time range) inside
@@ -225,4 +245,8 @@ Tracked per definition-of-done.md (Medium/Low only). Currently empty.
 | 04 | Pest browser server shares container state across requests (test-env limitation) | Low | Mitigated by the persistent-middleware regression test in the isolation suite. |
 | 04 | formattedPrice assumes 2-decimal currencies | Low | Fine for the v1 currency list (EUR/USD/GBP/CHF); note for future currencies. |
 | 05 | GetBookableSlots eager-loads time off unbounded by date range | Medium | Constrain by the requested window in Epic 06 before the public booking hot path. |
-| 05 | Engine has no guard against a non-positive packing step (unreachable via app validation) | Low | Add defensive guard with Epic 06 booking wiring. |
+| 05 | Engine has no guard against a non-positive packing step (unreachable via app validation) | Low | Done in Epic 06 (guard + tests). |
+| 06 | Customer-upsert unique-violation race (23505) returns 500 instead of a friendly retry | Medium | Translate alongside 23P01 in Epic 07 when reschedule shares the path. |
+| 06 | Booking step actions before the final confirm are not rate limited | Medium | Throttle the step actions in Epic 10 abuse-hardening. |
+| 06 | Manage/confirmed pages lack hydrate() tenant re-establishment (no actions yet) | Medium | Required when Epic 08 adds cancel/reschedule actions. |
+| 06 | No query-count assertion on the booking page; full-horizon engine pass on step 3 entry | Low | Add with Epic 07's mandated N+1 tests. |

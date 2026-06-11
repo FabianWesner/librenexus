@@ -110,6 +110,25 @@ test('back-to-back slots never overlap including buffers', function () {
     }
 });
 
+test('a non-positive packing step yields no slots instead of looping', function () {
+    $slots = (new ComputeSlots)->handle(computation([
+        'serviceDurationMinutes' => 0,
+        'bufferBeforeMinutes' => 0,
+        'bufferAfterMinutes' => 0,
+    ]));
+
+    expect($slots)->toBeEmpty();
+});
+
+test('a one-minute service still produces slots', function () {
+    $slots = (new ComputeSlots)->handle(computation([
+        'serviceDurationMinutes' => 1,
+        'weeklyRules' => [['weekday' => 1, 'start' => '09:00', 'end' => '09:03']],
+    ]));
+
+    expect($slots)->toHaveCount(3);
+});
+
 test('a service longer than every window yields zero slots', function () {
     $slots = (new ComputeSlots)->handle(computation([
         'serviceDurationMinutes' => 240,

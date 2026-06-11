@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\HealthController;
 use App\Http\Middleware\EnsureTeamMembership;
+use App\Http\Middleware\ResolvePublicTenant;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\PasswordResetLinkController;
 
@@ -13,6 +14,10 @@ Route::view('privacy', 'marketing.privacy')->name('privacy');
 Route::view('imprint', 'marketing.imprint')->name('imprint');
 
 Route::get('health', HealthController::class)->name('health');
+
+// Customer self-service entry point: the token is the credential, no auth
+// and no tenant slug involved (SEC-TOKEN, pages.md §Customer self-service).
+Route::livewire('manage/{token}', 'pages::booking.manage')->name('booking.manage');
 
 // Re-register Fortify's reset-link endpoint with an IP throttle (SEC-RATE-1);
 // Fortify only consults its limiter config for login and two-factor. This
@@ -35,3 +40,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+
+// Public booking: the tenant-slug catch-all is registered LAST so every
+// static and authenticated route above wins (ARCH-ROUTING-3); reserved
+// slugs additionally guarantee a tenant can never shadow a static page
+// (ARCH-ROUTING-4/5, App\Rules\TeamName).
+Route::middleware(ResolvePublicTenant::class)->group(function () {
+    Route::livewire('{tenant}', 'pages::booking.show')->name('booking.show');
+    Route::livewire('{tenant}/book/confirmed/{token}', 'pages::booking.confirmed')->name('booking.confirmed');
+});
