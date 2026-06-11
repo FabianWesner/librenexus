@@ -82,15 +82,40 @@
 ## Required fixes (blocking)
 
 - F1: publish the working-tree fixes and obtain a green CI run on main.
+  (Resolved; see re-review below.)
+
+## Re-review after fixes (2026-06-11)
+
+The blocking finding F1 was fixed and re-verified by this board:
+
+- The working-tree fixes were committed and pushed (`a5965ae` CI fixes + the
+  latent 2FA challenge bug, `29f5033` tests restoration + CI Chrome for
+  pa11y, `ef0b893` board notes, `214272c` demo-data re-seed between the e2e
+  suite and the public-page gates). The working tree is now clean.
+- CI run **27323217271** on main (commit `214272c`) re-verified via
+  `gh run view 27323217271 --json conclusion,jobs`: conclusion `success`,
+  all four jobs green (static; tests+coverage+mutation; e2e+accessibility+
+  performance; security+sbom). AC-1 is met: `make verify` green locally and
+  in CI on the default branch.
+- Badge URL and workflow URL both resolve (HTTP 200) and point at the public
+  runs of `ci.yml`; the latest completed main run is the green 27323217271.
+  AC-5 is met. (A newer doc-only commit `ec450b7`, linking the green run from
+  the quality report, was still in progress at re-review time; it changes no
+  code.)
+- F2 resolved: the scorecard now rates performance & reliability at the
+  defined level "solid MVP", with the no-load-testing cap stated in the
+  evidence column (docs/quality-report.md:201).
+- F3 remains an optional Low polish item (framework 429 page on throttled
+  logins); SEC-RATE-2 is met, not blocking.
 
 ## Final decision
 
-**FAIL**
+**PASS WITH WARNINGS** (initially FAIL; flipped after the re-review above)
 
-- Rationale: the application itself is functionally complete and every gate is
-  green on the final working tree, but AC-1 explicitly requires `make verify`
-  green **in CI on the default branch** and AC-5 requires badges linking to
-  real passing public runs. At review time the latest main run failed and the
-  fixes are unpushed. This is a packaging/publication blocker, not a feature
-  gap; once the commit lands and CI is green this review flips to PASS.
-- Blocking findings remaining: 1 (F1)
+- Rationale: with F1 resolved, every Epic 10 acceptance criterion is met with
+  evidence: AC-1 (verify green locally and in public CI run 27323217271),
+  AC-2 (all thresholds met, deviations justified), AC-3 (six final reviews
+  complete), AC-4 (honest quality report + scorecard, now using defined
+  levels), AC-5 (badge links to a real passing public run). The only
+  remaining item is the tracked Low UX note F3.
+- Blocking findings remaining: 0

@@ -80,17 +80,29 @@
 
 ## Required fixes (blocking)
 
-- None owned by this review (F2 is the shared publication blocker, tracked as
-  product F1).
+- None owned by this review (F2 was the shared publication blocker, tracked
+  as product F1; resolved, see re-review below).
+
+## Re-review after fixes (2026-06-11)
+
+- F1 resolved: the two Epic 07 deferred-log rows in docs/assumptions.md
+  (lines 275-276) now read as explicit accepted risks (PHPMD/Blade-SFC
+  tooling limitation covered by PHPStan + review; SFC split deferred until
+  behavior demands it), matching the quality report.
+- F2 resolved: all working-tree changes were committed and pushed
+  (`a5965ae`, `29f5033`, `ef0b893`, `214272c`); `git status` is clean and
+  CI run 27323217271 on main is green across all four jobs, including
+  "static (format, complexity, types, duplication, deps)".
+- F3 and F4 remain tracked Low notes (both under their gates' thresholds).
 
 ## Final decision
 
 **PASS WITH WARNINGS**
 
-- Rationale: every code-quality gate is green on the final tree, re-verified
-  for format and static by fresh runs, with no baselines, suppressions, or
-  threshold edits anywhere in the history of the Makefile gates. Warnings are
-  documentation staleness in the deferred log, the accepted PHPMD blind spot
-  for SFC front-matter, sub-threshold mailable duplication, and the
-  uncommitted working tree, none of which is a gate failure or gate-gaming.
-- Blocking findings remaining: 0 owned here (1 shared, tracked as product F1)
+- Rationale: every code-quality gate is green on the final published state,
+  re-verified for format and static by fresh runs and by the public CI run
+  27323217271, with no baselines, suppressions, or threshold edits anywhere
+  in the history of the Makefile gates. Remaining warnings are the accepted
+  PHPMD blind spot for SFC front-matter and sub-threshold mailable
+  duplication, both documented; neither is a gate failure or gate-gaming.
+- Blocking findings remaining: 0

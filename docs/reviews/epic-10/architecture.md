@@ -84,8 +84,18 @@
 
 ## Required fixes (blocking)
 
-- None owned by this review (F3 is the shared publication blocker tracked as
-  the Product report's F1).
+- None owned by this review (F3 was the shared publication blocker tracked as
+  the Product report's F1; resolved, see re-review below).
+
+## Re-review after fixes (2026-06-11)
+
+- F3 resolved: the `Fortify::twoFactorChallengeView` registration was
+  committed in `a5965ae` and pushed; CI run 27323217271 on main (commit
+  `214272c`) is green across all four jobs (verified via `gh run view`).
+  The boot-time registration gap no longer exists at HEAD.
+- F1 (SFC sizes) and F2 (password-policy fallback) remain tracked
+  warnings; the stale deferred-log rows referenced by F1 now read as
+  explicit accepted risks in docs/assumptions.md (rows for Epic 07).
 
 ## Final decision
 
@@ -95,6 +105,6 @@
   scoping, DB-level booking integrity, a pure slot engine, queued async, and
   all three ADRs implemented as written. Warnings are the accepted SFC sizes,
   the CSP trade-off, and the residual environment fallback in the password
-  policy, all documented. The unpublished Fortify-registration fix is blocking
-  at the application level but is tracked by the Product review.
-- Blocking findings remaining: 0 owned here (1 shared, tracked as product F1)
+  policy, all documented. The previously shared publication blocker is
+  resolved (green public CI run 27323217271).
+- Blocking findings remaining: 0

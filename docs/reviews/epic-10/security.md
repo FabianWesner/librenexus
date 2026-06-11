@@ -90,18 +90,29 @@
 
 ## Required fixes (blocking)
 
-- None owned by this review. F4 is the shared publication blocker (product F1);
-  all SEC-* rules hold on the final working tree, proven by fresh local runs.
+- None owned by this review. F4 was the shared publication blocker
+  (product F1); resolved, see re-review below. All SEC-* rules hold on the
+  final state, proven by fresh local runs and the green CI security job.
+
+## Re-review after fixes (2026-06-11)
+
+- F4 resolved: the CI install-step fix and the 2FA challenge view
+  registration were committed (`a5965ae`) and pushed. CI run 27323217271 on
+  main (commit `214272c`) is green, including the
+  "security (secrets, sast, audit, osv, sbom)" job, so the scanners now run
+  publicly on the default branch (verified via `gh run view 27323217271
+  --json conclusion,jobs`).
+- F1 (CSP trade-off), F2, and F3 remain documented accepted risks; F2's
+  context is unchanged.
 
 ## Final decision
 
 **PASS WITH WARNINGS**
 
 - Rationale: tenant isolation and token security re-proven by fresh runs of
-  their named suites; all scanners clean on the final tree; every previously
-  deferred security item (password policy, session fixation, step throttles,
-  decline coverage, CSP re-check) was genuinely closed in Epic 10. Warnings
-  are the documented CSP trade-off and two accepted Low items. The red CI
-  security job is a publication blocker tracked by the Product review, not a
-  weakness in the application's security posture.
-- Blocking findings remaining: 0 owned here (1 shared, tracked as product F1)
+  their named suites; all scanners clean on the final tree and now also in
+  the public CI security job (run 27323217271); every previously deferred
+  security item (password policy, session fixation, step throttles, decline
+  coverage, CSP re-check) was genuinely closed in Epic 10. Warnings are the
+  documented CSP trade-off and two accepted Low items.
+- Blocking findings remaining: 0

@@ -84,16 +84,38 @@
 ## Required fixes (blocking)
 
 - F1: publish the working-tree fixes; re-run CI; QG-E2E must be green on main.
+  (Resolved; see re-review below.)
+
+## Re-review after fixes (2026-06-11)
+
+F1 was fixed and re-verified:
+
+- The fixes were committed and pushed: `a5965ae` (Fortify
+  `twoFactorChallengeView` registration, smoke-test wait before axe, contrast
+  tweak, CI install-step hardening), `29f5033` (tests/ restoration after an
+  accidental case-insensitive deletion + puppeteer Chrome install so pa11y
+  has a browser in CI), `214272c` (demo-data re-seed between the browser
+  tests and the public-page gates, because the e2e suite refreshes the job
+  database). The working tree is clean.
+- CI run **27323217271** on main (commit `214272c`) verified via
+  `gh run view 27323217271 --json conclusion,jobs`: conclusion `success`;
+  the "tests, coverage, mutation" and "e2e, accessibility, performance" jobs
+  (and the other two) are all green. QG-TESTS/QG-COVERAGE/QG-MUTATION/QG-E2E
+  are now green both locally and on the default branch.
+- Checklist item 11 (determinism) upgrades from ❌→⚠️ to ⚠️: the
+  environment-sensitivity was fixed with an explicit wait, and the re-seed
+  step removes the cross-job data coupling; both are CI-environment
+  hardening, kept as a tracked note only.
+- F2 (AvailabilityRule 0.0% file coverage) remains an optional Low note.
 
 ## Final decision
 
-**FAIL**
+**PASS WITH WARNINGS** (initially FAIL; flipped after the re-review above)
 
-- Rationale: the test system itself is excellent: thresholds beaten by wide
-  margins, mutation-backed assertions, honest survivor accounting, named
-  suites re-verified green by this review. But the E2E gate is currently red
-  on the default branch because a real defect at HEAD (unregistered 2FA
-  challenge view) was caught by CI while its fix remains uncommitted. The DoD
-  requires the pipeline green in CI, so this blocks until pushed. Single,
-  well-understood fix; flips to PASS on a green run.
-- Blocking findings remaining: 1 (F1, shared with product F1)
+- Rationale: the test system is excellent (thresholds beaten by wide margins,
+  mutation-backed assertions, honest survivor accounting, named suites
+  re-verified green by this review), and with F1 resolved the full test
+  pipeline is green in public CI on the default branch as the DoD requires.
+  Remaining notes are Low (file-coverage cosmetics, CI-environment
+  hardening already applied).
+- Blocking findings remaining: 0

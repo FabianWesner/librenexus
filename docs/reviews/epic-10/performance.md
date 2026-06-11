@@ -79,14 +79,26 @@
 
 - None owned by this review.
 
+## Re-review after fixes (2026-06-11)
+
+- F3 resolved: CI run 27323217271 on main (commit `214272c`) is green,
+  including the "e2e, accessibility, performance" job, so Lighthouse and
+  pa11y now have public CI evidence (verified via `gh run view 27323217271
+  --json conclusion,jobs`). The fix also added a demo-data re-seed between
+  the browser tests and the public-page gates, removing the cross-job data
+  coupling in CI.
+- The scorecard now uses the defined level "solid MVP" for performance &
+  reliability with the no-load-testing cap in the evidence column, matching
+  this review's checklist item 4 (docs/quality-report.md:201).
+
 ## Final decision
 
 **PASS**
 
-- Rationale: QG-PERF is fully green with margin on all 11 audited URLs, N+1
-  freedom is proven by strict query-count tests rather than asserted, booking
-  is atomic under genuinely raced connections, and all mail is queued. The
-  only real gap, absent load testing, is explicitly disclosed and correctly
-  capped in the scorecard, which is the honest treatment the benchmark asks
-  for.
+- Rationale: QG-PERF is fully green with margin on all 11 audited URLs, both
+  locally and in the public CI run 27323217271; N+1 freedom is proven by
+  strict query-count tests rather than asserted, booking is atomic under
+  genuinely raced connections, and all mail is queued. The only real gap,
+  absent load testing, is explicitly disclosed and correctly capped in the
+  scorecard, which is the honest treatment the benchmark asks for.
 - Blocking findings remaining: 0
