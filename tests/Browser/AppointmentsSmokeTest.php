@@ -96,3 +96,27 @@ test('the calendar day view is accessible and error free', function () {
         ->assertNoJavascriptErrors()
         ->assertNoAccessibilityIssues();
 });
+
+test('the calendar day grid renders with visible dimensions (BUG-002)', function () {
+    // The time grid is the desktop layout (md:block), so use a desktop width.
+    $page = visit(route('calendar.index', ['current_team' => $this->team->slug], absolute: false))
+        ->resize(1280, 900)
+        ->assertSee('Calendar');
+
+    // Read the grid's real box. BUG-002 collapsed this container to 0x0
+    // because the flex parent had no height.
+    $rect = $page->script(<<<'JS'
+        (() => {
+            const grid = document.querySelector('[data-test="calendar-grid"]');
+            if (! grid) {
+                return null;
+            }
+            const { width, height } = grid.getBoundingClientRect();
+            return { width, height };
+        })()
+    JS);
+
+    expect($rect)->not->toBeNull()
+        ->and($rect['width'])->toBeGreaterThan(0)
+        ->and($rect['height'])->toBeGreaterThan(0);
+});

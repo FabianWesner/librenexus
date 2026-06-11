@@ -285,7 +285,7 @@ new #[Title('Calendar')] class extends Component
         </div>
     @else
         {{-- Desktop: time grid with one column per staff member. --}}
-        <div class="mt-6 hidden overflow-x-auto md:block">
+        <div class="mt-6 hidden max-h-[40rem] overflow-auto md:block">
             <div class="min-w-[40rem]">
                 <div class="flex border-b border-zinc-200 pb-2 dark:border-zinc-700">
                     <div class="w-14 shrink-0"></div>
@@ -299,7 +299,12 @@ new #[Title('Calendar')] class extends Component
                     @endforeach
                 </div>
 
-                <div class="relative flex" data-test="calendar-grid">
+                {{-- The CSS grid children size themselves from their row template
+                     (52 rows of 1.25rem = 65rem), but a flex parent with no
+                     height does not adopt that intrinsic height, so the grid
+                     collapsed to 0x0 (BUG-002). Pin the height to the row
+                     template so the columns and appointment blocks are visible. --}}
+                <div class="relative flex h-[65rem]" data-test="calendar-grid">
                     @if ($this->currentTimePercent !== null)
                         <div class="pointer-events-none absolute inset-x-0 z-20 border-t-2 border-red-600" style="top: {{ $this->currentTimePercent }}%" data-test="calendar-now-marker" aria-hidden="true"></div>
                     @endif

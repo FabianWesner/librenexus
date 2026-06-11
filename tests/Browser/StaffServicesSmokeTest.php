@@ -59,3 +59,31 @@ test('the service create modal is accessible and error free', function () {
     $page->assertNoJavascriptErrors()
         ->assertNoAccessibilityIssues();
 });
+
+test('a freshly created service can be archived through its confirmation modal (BUG-001)', function () {
+    $page = visit(route('services.index', ['current_team' => $this->team->slug], absolute: false))
+        ->click('Add service')
+        ->assertSee('Add a service')
+        ->fill('name', 'QA Test Service')
+        ->fill('durationMinutes', '30')
+        ->press('Save')
+        ->assertSee('QA Test Service');
+
+    $service = Service::query()->where('name', 'QA Test Service')->sole();
+
+    // After the Livewire morph that added the new row, the archive trigger
+    // and its modal must stay in sync: clicking archive on the new row has
+    // to open the confirmation dialog (BUG-001 left it without a modal).
+    $page->click('[data-test="service-row"]:has-text("QA Test Service") [data-test="service-archive-button"]')
+        ->assertSee('Archive service')
+        ->assertSee('QA Test Service will no longer be bookable');
+
+    $page->script('document.querySelectorAll("dialog[open]").forEach((dialog) => dialog.getAnimations({subtree: true}).forEach((animation) => { try { animation.finish() } catch (error) { animation.cancel() } }))');
+
+    // Each active row now owns its own modal, so scope the confirm click to
+    // the open dialog rather than the (now several) archive-confirm buttons.
+    $page->click('dialog[open] [data-test="service-archive-confirm"]')
+        ->assertDontSee('QA Test Service will no longer be bookable');
+
+    expect($service->fresh()->is_active)->toBeFalse();
+});

@@ -26,3 +26,4 @@ yarn-error.log
 /.vscode
 /.zed
 tests/Browser/Screenshots/
+.playwright-mcp/

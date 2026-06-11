@@ -322,6 +322,25 @@ new #[Title('Staff')] class extends Component
                                                     <flux:button variant="ghost" size="sm" icon="pause" data-test="staff-deactivate-button" />
                                                 </flux:tooltip>
                                             </flux:modal.trigger>
+
+                                            {{-- The modal lives in the same loop iteration as its trigger so a
+                                                 trigger can never reference a modal that was not rendered (BUG-001). --}}
+                                            <flux:modal name="deactivate-staff-{{ $staffMember->id }}" focusable class="max-w-lg">
+                                                <form wire:submit="deactivateStaff({{ $staffMember->id }})" class="space-y-6">
+                                                    <div>
+                                                        <flux:heading size="lg">{{ __('Deactivate staff member') }}</flux:heading>
+                                                        <flux:subheading>
+                                                            {{ __(':name will no longer be bookable. Past appointments are kept.', ['name' => $staffMember->name]) }}
+                                                        </flux:subheading>
+                                                    </div>
+                                                    <div class="flex justify-end space-x-2 rtl:space-x-reverse">
+                                                        <flux:modal.close>
+                                                            <flux:button variant="filled">{{ __('Cancel') }}</flux:button>
+                                                        </flux:modal.close>
+                                                        <flux:button variant="danger" type="submit" data-test="staff-deactivate-confirm">{{ __('Deactivate') }}</flux:button>
+                                                    </div>
+                                                </form>
+                                            </flux:modal>
                                         @else
                                             <flux:tooltip :content="__('Reactivate staff member')">
                                                 <flux:button variant="ghost" size="sm" icon="play" wire:click="reactivateStaff({{ $staffMember->id }})" data-test="staff-reactivate-button" />
@@ -334,29 +353,6 @@ new #[Title('Staff')] class extends Component
                     @endforeach
                 </flux:table.rows>
             </flux:table>
-
-            @if ($this->canManage)
-                @foreach ($this->staffMembers as $staffMember)
-                    @if ($staffMember->is_active)
-                        <flux:modal name="deactivate-staff-{{ $staffMember->id }}" focusable class="max-w-lg">
-                            <form wire:submit="deactivateStaff({{ $staffMember->id }})" class="space-y-6">
-                                <div>
-                                    <flux:heading size="lg">{{ __('Deactivate staff member') }}</flux:heading>
-                                    <flux:subheading>
-                                        {{ __(':name will no longer be bookable. Past appointments are kept.', ['name' => $staffMember->name]) }}
-                                    </flux:subheading>
-                                </div>
-                                <div class="flex justify-end space-x-2 rtl:space-x-reverse">
-                                    <flux:modal.close>
-                                        <flux:button variant="filled">{{ __('Cancel') }}</flux:button>
-                                    </flux:modal.close>
-                                    <flux:button variant="danger" type="submit" data-test="staff-deactivate-confirm">{{ __('Deactivate') }}</flux:button>
-                                </div>
-                            </form>
-                        </flux:modal>
-                    @endif
-                @endforeach
-            @endif
         @endif
     </div>
 

@@ -182,6 +182,30 @@ test('an archived service can be restored', function () {
     expect(Service::query()->bookable()->count())->toBe(1);
 });
 
+test('a freshly created service renders its archive trigger and modal together (BUG-001)', function () {
+    $this->actingAs($this->owner);
+
+    // Reproduce the QA path: create a service through the component, then
+    // assert the new row's archive trigger and its modal are both present
+    // in the same render. They are emitted from one loop, so a trigger can
+    // never point at a modal that was not rendered.
+    $component = Livewire::test('pages::services.index', ['current_team' => $this->team])
+        ->set('name', 'QA Test Service')
+        ->set('durationMinutes', 30)
+        ->call('saveService')
+        ->assertHasNoErrors();
+
+    $newService = Service::query()->where('name', 'QA Test Service')->firstOrFail();
+    $html = $component->html();
+
+    $modalName = 'archive-service-'.$newService->id;
+    $triggerCount = substr_count($html, "modal-show', { name: '".$modalName."'");
+    $modalCount = substr_count($html, 'data-modal="'.$modalName.'"');
+
+    expect($triggerCount)->toBe(1)
+        ->and($modalCount)->toBe($triggerCount);
+});
+
 test('a staff-role member cannot create, update, or archive services', function () {
     $service = Service::factory()->create(['team_id' => $this->team->id]);
 

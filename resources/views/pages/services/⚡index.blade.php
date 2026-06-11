@@ -253,6 +253,25 @@ new #[Title('Services')] class extends Component
                                                 <flux:button variant="ghost" size="sm" icon="archive-box" data-test="service-archive-button" />
                                             </flux:tooltip>
                                         </flux:modal.trigger>
+
+                                        {{-- The modal lives in the same loop iteration as its trigger so a
+                                             trigger can never reference a modal that was not rendered (BUG-001). --}}
+                                        <flux:modal name="archive-service-{{ $service->id }}" focusable class="max-w-lg">
+                                            <form wire:submit="archiveService({{ $service->id }})" class="space-y-6">
+                                                <div>
+                                                    <flux:heading size="lg">{{ __('Archive service') }}</flux:heading>
+                                                    <flux:subheading>
+                                                        {{ __(':name will no longer be bookable. Past appointments are kept.', ['name' => $service->name]) }}
+                                                    </flux:subheading>
+                                                </div>
+                                                <div class="flex justify-end space-x-2 rtl:space-x-reverse">
+                                                    <flux:modal.close>
+                                                        <flux:button variant="filled">{{ __('Cancel') }}</flux:button>
+                                                    </flux:modal.close>
+                                                    <flux:button variant="danger" type="submit" data-test="service-archive-confirm">{{ __('Archive') }}</flux:button>
+                                                </div>
+                                            </form>
+                                        </flux:modal>
                                     @else
                                         <flux:tooltip :content="__('Restore service')">
                                             <flux:button variant="ghost" size="sm" icon="arrow-uturn-left" wire:click="restoreService({{ $service->id }})" data-test="service-restore-button" />
@@ -264,29 +283,6 @@ new #[Title('Services')] class extends Component
                     @endforeach
                 </flux:table.rows>
             </flux:table>
-
-            @if ($this->canManage)
-                @foreach ($this->services as $service)
-                    @if ($service->is_active)
-                        <flux:modal name="archive-service-{{ $service->id }}" focusable class="max-w-lg">
-                            <form wire:submit="archiveService({{ $service->id }})" class="space-y-6">
-                                <div>
-                                    <flux:heading size="lg">{{ __('Archive service') }}</flux:heading>
-                                    <flux:subheading>
-                                        {{ __(':name will no longer be bookable. Past appointments are kept.', ['name' => $service->name]) }}
-                                    </flux:subheading>
-                                </div>
-                                <div class="flex justify-end space-x-2 rtl:space-x-reverse">
-                                    <flux:modal.close>
-                                        <flux:button variant="filled">{{ __('Cancel') }}</flux:button>
-                                    </flux:modal.close>
-                                    <flux:button variant="danger" type="submit" data-test="service-archive-confirm">{{ __('Archive') }}</flux:button>
-                                </div>
-                            </form>
-                        </flux:modal>
-                    @endif
-                @endforeach
-            @endif
         @endif
     </div>
 
