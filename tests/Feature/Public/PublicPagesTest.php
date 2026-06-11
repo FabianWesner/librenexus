@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Team;
 use Illuminate\Support\Facades\Route;
 
 $publicRoutes = [
@@ -33,6 +34,9 @@ test('the global footer appears on every public page with resolving links', func
 })->with(['home', 'pricing', 'docs', 'open-source', 'privacy', 'imprint']);
 
 test('every internal link target on the public pages resolves', function () {
+    // The homepage demo CTA points at the seeded demo tenant (Epic 09).
+    Team::factory()->create(['name' => 'Demo Clinic', 'slug' => 'demo-clinic']);
+
     $pages = ['home', 'pricing', 'docs', 'open-source', 'privacy', 'imprint'];
 
     $internalPaths = collect($pages)

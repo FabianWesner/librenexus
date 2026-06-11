@@ -101,6 +101,11 @@ already know the resource exists. Documented choice per Epic 03 notes.
 - Demo seeder uses a fixed token so the `/manage/{token}` URL is stable for
   the pa11y/Lighthouse gates (Epic 09). Documented as intentionally
   non-secret demo data in `.gitleaks.toml` terms if flagged.
+- Demo seeder (Epic 09) also creates a demo owner login,
+  `demo@librenexus.test` / `password` (verified, owner of `demo-clinic`), so
+  a reviewer can explore the authenticated app without registering. Like the
+  demo manage token, these are intentionally non-secret local demo
+  credentials; the seeder is idempotent and never overwrites existing data.
 
 ## Booking (Epic 06)
 
@@ -214,10 +219,12 @@ already know the resource exists. Documented choice per Epic 03 notes.
 
 ## Public site (Epic 01)
 
-- The homepage's secondary CTA ("See a demo booking page") links to the docs
-  booking section until the demo tenant exists (Epic 09), per the epic note
-  that the link must never 404. Swapped to the seeded demo booking URL in
-  Epic 09.
+- The homepage's secondary CTA ("See a demo booking page") now links to the
+  seeded demo booking page `/demo-clinic` (swapped in Epic 09 as planned; it
+  pointed at the docs booking section while no demo tenant existed).
+- The demo seeder refuses to run in production (guard + test, Epic 09
+  security review), so the non-secret demo credentials can never reach a
+  production database.
 - The GitHub repository URL is `config('app.repository_url')`
   (`APP_REPOSITORY_URL` env); the placeholder default is confirmed when the
   proof package is published (Epic 10). External links are not asserted by

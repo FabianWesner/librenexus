@@ -17,8 +17,13 @@ and `librenexus_test`), plus the security toolchain (`gitleaks`, `semgrep`,
 `osv-scanner`, `syft`) for the full pipeline.
 
 ```bash
-make setup    # install deps, env, migrate, build assets, install browsers
+make setup    # install deps, env, migrate, seed demo data, build assets, install browsers
 ```
+
+Seeding (idempotent, also run by `make setup` via `php artisan db:seed`)
+creates an explorable demo tenant at `/demo-clinic` with staff, services,
+availability, and sample appointments, plus a demo owner login
+(`demo@librenexus.test` / `password`).
 
 ## Reproduce the benchmark
 

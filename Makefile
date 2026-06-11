@@ -47,6 +47,7 @@ setup: ## Install dependencies, set up env, migrate, build assets
 	@test -f .env || cp .env.example .env
 	@grep -q "^APP_KEY=base64" .env || php artisan key:generate
 	php artisan migrate --force
+	php artisan db:seed --force
 	npm ci
 	npm run build
 	npx playwright install chromium

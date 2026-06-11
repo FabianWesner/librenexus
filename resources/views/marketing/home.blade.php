@@ -19,8 +19,8 @@
                     <a href="{{ route('register') }}" class="rounded-md bg-brand-600 px-5 py-3 text-sm font-medium text-white hover:bg-brand-700 focus:outline-2 focus:outline-offset-2 focus:outline-brand-600">
                         Get started free
                     </a>
-                    <a href="{{ route('docs') }}#booking" class="rounded-md px-2 py-3 text-sm font-medium text-brand-700 hover:text-brand-800 focus:outline-2 focus:outline-offset-2 focus:outline-brand-600 dark:text-brand-300 dark:hover:text-brand-200">
-                        See how booking works
+                    <a href="{{ url('/demo-clinic') }}" class="rounded-md px-2 py-3 text-sm font-medium text-brand-700 hover:text-brand-800 focus:outline-2 focus:outline-offset-2 focus:outline-brand-600 dark:text-brand-300 dark:hover:text-brand-200">
+                        See a demo booking page
                     </a>
                 </div>
             </div>

@@ -29,7 +29,7 @@ Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
 Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
-        Route::view('dashboard', 'dashboard')->name('dashboard');
+        Route::livewire('dashboard', 'pages::dashboard.index')->name('dashboard');
         Route::livewire('staff', 'pages::staff.index')->name('staff.index');
         Route::livewire('staff/{staff}/availability', 'pages::staff.availability')->name('staff.availability');
         Route::livewire('services', 'pages::services.index')->name('services.index');
