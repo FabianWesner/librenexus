@@ -96,7 +96,12 @@ PostgreSQL, database queues, Fortify auth. Three decisions carry the system
 | SBOM (syft) | generated | `reports/sbom.cdx.json` |
 
 The exact, reproducible command is `make setup && make verify` from a clean
-checkout with PostgreSQL, Node, PHP 8.4, and the documented tools.
+checkout with PostgreSQL, Node, PHP 8.4, and the documented tools. CI runs
+the same targets on every push; the first fully green run on the default
+branch is
+[run 27323217271](https://github.com/FabianWesner/librenexus/actions/runs/27323217271)
+(all four jobs: static, tests + coverage + mutation, e2e + accessibility +
+performance, security + SBOM).
 
 ## Security notes (SEC-*)
 
