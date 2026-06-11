@@ -25,7 +25,7 @@ return [
     |
     */
 
-    'repository_url' => env('APP_REPOSITORY_URL', 'https://github.com/librenexus/librenexus'),
+    'repository_url' => env('APP_REPOSITORY_URL', 'https://github.com/FabianWesner/librenexus'),
 
     /*
     |--------------------------------------------------------------------------
