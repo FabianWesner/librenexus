@@ -99,6 +99,8 @@ new #[Layout('layouts::booking')] class extends Component
 
     public function chooseStaff(string $selection): void
     {
+        $this->throttleStepAction();
+
         $service = $this->requireService();
 
         if ($selection === 'any') {
@@ -115,6 +117,8 @@ new #[Layout('layouts::booking')] class extends Component
 
     public function selectDate(string $date): void
     {
+        $this->throttleStepAction();
+
         if (! in_array($date, $this->availableDates, true)) {
             throw ValidationException::withMessages([
                 'selectedDate' => __('Please pick one of the available days.'),
@@ -325,6 +329,21 @@ new #[Layout('layouts::booking')] class extends Component
         unset($this->timeSlots, $this->dayOptions);
     }
 
+    /**
+     * Throttle the step actions that trigger slot computation (entering
+     * the time step, changing the day) per IP (SEC-RATE, Epic 10): the
+     * engine pass is the most expensive unauthenticated code path. The
+     * final confirm keeps its own, much tighter limit.
+     */
+    private function throttleStepAction(): void
+    {
+        if (! RateLimiter::attempt('booking-steps:'.request()->ip(), 60, fn (): bool => true, 60)) {
+            throw ValidationException::withMessages([
+                'booking' => __('Too many requests. Please wait a minute and try again.'),
+            ]);
+        }
+    }
+
     private function chosenStaff(): ?Staff
     {
         if ($this->staffSelection === null || $this->staffSelection === 'any') {
@@ -466,6 +485,7 @@ new #[Layout('layouts::booking')] class extends Component
             </ul>
 
             <flux:error name="serviceId" />
+            <flux:error name="booking" />
         @elseif ($step === 3)
             <flux:heading size="lg" level="2">{{ __('Pick a day and time') }}</flux:heading>
             <flux:text class="mt-1">{{ __('Times are shown in :timezone time.', ['timezone' => $team->timezone]) }}</flux:text>
@@ -514,6 +534,7 @@ new #[Layout('layouts::booking')] class extends Component
 
             <flux:error name="selectedDate" />
             <flux:error name="selectedSlot" />
+            <flux:error name="booking" />
         @elseif ($step === 4)
             <flux:heading size="lg" level="2">{{ __('Your details') }}</flux:heading>
 

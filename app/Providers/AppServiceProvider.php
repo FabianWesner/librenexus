@@ -47,7 +47,10 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
+        // Config-driven (ARCH-CONFIG-2): the flag decides the policy; only
+        // the config default falls back to the environment, so tests can
+        // force either policy without faking an environment.
+        Password::defaults(fn (): ?Password => $this->usesStrictPasswordPolicy()
             ? Password::min(12)
                 ->mixedCase()
                 ->letters()
@@ -56,5 +59,15 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
+    }
+
+    /**
+     * Whether the strict password policy applies: the explicit
+     * auth.password_policy.strict flag wins, a null flag means
+     * "strict in production, relaxed elsewhere".
+     */
+    private function usesStrictPasswordPolicy(): bool
+    {
+        return config('auth.password_policy.strict') ?? $this->app->isProduction();
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Teams\UpdateMemberRole;
 use App\Data\TeamPermissions;
 use App\Enums\TeamRole;
 use App\Models\Team;
@@ -11,7 +12,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -128,19 +128,7 @@ new class extends Component
             'role' => ['required', 'string', Rule::enum(TeamRole::class)],
         ])->validate();
 
-        $membership = $this->teamModel->memberships()
-            ->where('user_id', $userId)
-            ->firstOrFail();
-
-        $newRole = TeamRole::from($validated['role']);
-
-        if ($membership->role === TeamRole::Owner && $newRole !== TeamRole::Owner && $this->teamModel->isLastOwner($membership->user)) {
-            throw ValidationException::withMessages([
-                'role' => [__('This member is the last owner. Transfer ownership before changing their role.')],
-            ]);
-        }
-
-        $membership->update(['role' => $newRole]);
+        app(UpdateMemberRole::class)->handle($this->teamModel, $userId, TeamRole::from($validated['role']));
 
         $this->populateTeamData();
 

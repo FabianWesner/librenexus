@@ -253,16 +253,16 @@ Tracked per definition-of-done.md (Medium/Low only). Currently empty.
 
 | Epic | Finding | Severity | Plan |
 |------|---------|----------|------|
-| 00 | CSP keeps `unsafe-inline`/`unsafe-eval` for Livewire/Alpine/Flux | Medium | Revisit tightening (nonces) in Epic 10 hardening; justified inline in `SetSecurityHeaders`. |
+| 00 | CSP keeps `unsafe-inline`/`unsafe-eval` for Livewire/Alpine/Flux | Medium | Re-verified in Epic 10: dropping `unsafe-eval` fails 27 of 35 browser smoke tests (Alpine evaluates expressions with `new Function()`); requirement documented in `SetSecurityHeaders`. |
 | 00 | Overall line coverage 76.8% (starter-kit baseline, < 80%) | Medium | 79.3% after Epic 02; remaining gap is Epic 03 teams scaffolding. Blocking at Phase 6 / Epic 10. |
 | 01 | `APP_REPOSITORY_URL` placeholder 404s until repo is public | Medium | Confirm real URL in Epic 10 proof package. |
-| 02 | `Password::defaults` branches on `isProduction()` (ARCH-CONFIG-2); strict policy untested | Medium | Move to config-driven policy or add a config-forced test in Epic 10. |
+| 02 | `Password::defaults` branches on `isProduction()` (ARCH-CONFIG-2); strict policy untested | Medium | Done in Epic 10: config-driven `auth.password_policy.strict` flag (null falls back to the environment) plus a config-forced strict-policy registration test. |
 | 02 | Throttled logins show the framework 429 page, not an inline form message | Medium | Consider an inline message in Epic 10 polish (SEC-RATE-2 is still met: clear, non-leaky). |
-| 02 | No explicit session-fixation regeneration assertion | Low | Add assertion in Epic 10 hardening (framework default behavior). |
-| 03 | Member-role update logic lives inline in the teams edit component | Medium | Extract into an Action when Epic 04 touches member flows, or by Epic 10. |
+| 02 | No explicit session-fixation regeneration assertion | Low | Done in Epic 10: `AuthHardeningTest` asserts the session id changes across login. |
+| 03 | Member-role update logic lives inline in the teams edit component | Medium | Done in Epic 10: extracted to `App\Actions\Teams\UpdateMemberRole` (transaction + lockForUpdate, last-owner guard). |
 | 03 | Team switcher reads one role query per team (small bounded 1+N) | Medium | Read role from the loaded pivot + add a query-count assertion in Epic 04. |
 | 03 | Invitation accepted via GET; invite codes stored in plaintext | Low | Revisit in Epic 10 hardening (codes are 64-char random, single-use, expiring). |
-| 03 | declineInvitation path untested; teams edit component oversized | Low | Cover/refactor by Epic 10. |
+| 03 | declineInvitation path untested; teams edit component oversized | Low | Done in Epic 10: decline covered (deletes the invitation, never joins the team, wrong-recipient rejected); member-role logic moved out of the edit component. |
 | 04 | AC-3 "past appointments remain" and AC-4 "slot engine respects assignment" provable only once appointments/slot engine exist | Medium | Prove with explicit tests in Epics 05 (assignment) and 06/07 (history retention). |
 | 04 | Staff/service CRUD + link logic lives inline in Livewire SFC pages | Medium | Extract to Actions if the components grow again; revisit by Epic 10. |
 | 04 | Pest browser server shares container state across requests (test-env limitation) | Low | Mitigated by the persistent-middleware regression test in the isolation suite. |
@@ -271,13 +271,13 @@ Tracked per definition-of-done.md (Medium/Low only). Currently empty.
 | 05 | Engine has no guard against a non-positive packing step (unreachable via app validation) | Low | Done in Epic 06 (guard + tests). |
 | 06 | Customer-upsert unique-violation race (23505) returns 500 instead of a friendly retry | Medium | Done in Epic 07: retried once, tested both ways. |
 | 07 | Rescheduling does not yet email the customer (FR-APPT-5 SHOULD, cancel mail ships) | Medium | Done in Epic 08: `AppointmentRescheduledMail` queued from both the admin and the self-service path. |
-| 07 | Appointments list is unpaginated (ordered get()) | Medium | Paginate in Epic 09/10 before dashboards drive traffic to it. |
+| 07 | Appointments list is unpaginated (ordered get()) | Medium | Done in Epic 10: paginated at 25 per page (filters preserved via URL, page resets on filter change), query count stays flat. |
 | 07 | PHPMD never scans resources/views, so Livewire SFC classes escape the complexity gate | Medium | Extend the Makefile complexity target in Epic 10 and fix any findings. |
 | 07 | Appointments list SFC oversized (same pattern as Epics 03/04) | Medium | Component split tracked for Epic 10. |
 | 07 | Calendar blocks use staff colors (pages.md sketches service colors); out-of-window blocks clamp to the grid edge | Low | Judgment call documented; revisit only if reviewers object in Epic 10. |
 | 08 | Reminder reset on reschedule + genuine claim-race test | - | Closed post-review in Epic 08 itself (both shipped with tests). |
 | 08 | Manage capability-URL appears in external access logs; GET on manage page unthrottled | Low | Inherent to tokened-link design; note in Epic 10 ops docs + abuse hardening. |
 | 08 | Four mailables repeat the scalar-capture block | Low | Extract a shared base in Epic 10 if duplication gate ever complains. |
-| 06 | Booking step actions before the final confirm are not rate limited | Medium | Throttle the step actions in Epic 10 abuse-hardening. |
+| 06 | Booking step actions before the final confirm are not rate limited | Medium | Done in Epic 10: 60/min per-IP throttle on the slot-computation step actions with a friendly message; the 10/min confirm throttle is unchanged. |
 | 06 | Manage/confirmed pages lack hydrate() tenant re-establishment (no actions yet) | Medium | Done in Epic 08: the manage page re-resolves the appointment by token and re-sets the tenant on every Livewire request; the confirmed page still has no actions. |
 | 06 | No query-count assertion on the booking page; full-horizon engine pass on step 3 entry | Low | Add with Epic 07's mandated N+1 tests. |

@@ -18,6 +18,7 @@ use App\Models\Team;
 use Carbon\CarbonImmutable;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -29,6 +30,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 /**
  * Appointment list for the active tenant (FR-APPT-1, Epic 07): filterable
@@ -41,6 +43,10 @@ use Livewire\Component;
  */
 new #[Title('Appointments')] class extends Component
 {
+    use WithPagination;
+
+    private const int PER_PAGE = 25;
+
     #[Locked]
     public Team $team;
 
@@ -96,6 +102,17 @@ new #[Title('Appointments')] class extends Component
 
         if ($this->localDate($this->fromDate) === null) {
             $this->fromDate = CarbonImmutable::now($this->team->timezone)->format('Y-m-d');
+        }
+    }
+
+    /**
+     * Jump back to the first page whenever a list filter changes, so the
+     * filtered result never starts on a stale page.
+     */
+    public function updated(string $property): void
+    {
+        if (in_array($property, ['staffFilter', 'serviceFilter', 'statusFilter', 'fromDate', 'untilDate'], true)) {
+            $this->resetPage();
         }
     }
 
@@ -323,12 +340,13 @@ new #[Title('Appointments')] class extends Component
     /**
      * The visible appointments: tenant-scoped, filtered, and restricted to
      * the user's own staff record for staff-role members in the query
-     * itself (FR-APPT-2, AC-2). Relations are eager loaded (NFR-PERF).
+     * itself (FR-APPT-2, AC-2). Relations are eager loaded (NFR-PERF) and
+     * the list is paginated so it stays bounded at any volume (Epic 10).
      *
-     * @return EloquentCollection<int, Appointment>
+     * @return LengthAwarePaginator<int, Appointment>
      */
     #[Computed]
-    public function appointments(): EloquentCollection
+    public function appointments(): LengthAwarePaginator
     {
         $fromUtc = $this->localDate($this->fromDate)?->startOfDay()->utc();
         $untilUtc = $this->localDate($this->untilDate)?->addDay()->startOfDay()->utc();
@@ -343,7 +361,7 @@ new #[Title('Appointments')] class extends Component
             ->when($untilUtc, fn ($query, CarbonImmutable $until) => $query->where('starts_at', '<', $until))
             ->orderBy('starts_at')
             ->orderBy('id')
-            ->get();
+            ->paginate(self::PER_PAGE);
     }
 
     /**
@@ -616,6 +634,8 @@ new #[Title('Appointments')] class extends Component
                     @endforeach
                 </flux:table.rows>
             </flux:table>
+
+            <flux:pagination :paginator="$this->appointments" class="mt-4" data-test="appointments-pagination" />
         @endif
     </div>
 

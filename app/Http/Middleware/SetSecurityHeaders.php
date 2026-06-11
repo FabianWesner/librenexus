@@ -12,6 +12,13 @@ use Symfony\Component\HttpFoundation\Response;
  * The CSP keeps 'unsafe-inline' and 'unsafe-eval' for scripts because
  * Livewire and Alpine evaluate inline expressions and Flux injects inline
  * style/script fragments; everything else is restricted to same-origin.
+ *
+ * Re-verified in Epic 10: dropping 'unsafe-eval' from script-src failed 27
+ * of 35 browser smoke tests with "Uncaught EvalError: Evaluating a string
+ * as JavaScript violates the Content Security Policy directive" because
+ * Alpine (bundled with Livewire) evaluates its expressions with new
+ * Function(), so the directive must stay until a CSP-safe Alpine build is
+ * adopted.
  */
 class SetSecurityHeaders
 {

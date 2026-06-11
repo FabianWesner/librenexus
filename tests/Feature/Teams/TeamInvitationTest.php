@@ -156,6 +156,56 @@ test('pending invitations excludes expired invitations without deleting them', f
     ]);
 });
 
+test('a pending invitation can be declined without joining the team', function () {
+    $owner = User::factory()->create();
+    $invitedUser = User::factory()->create(['email' => 'invited@example.com']);
+    $team = Team::factory()->create();
+
+    $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
+
+    $invitation = TeamInvitation::factory()->create([
+        'team_id' => $team->id,
+        'email' => 'invited@example.com',
+        'invited_by' => $owner->id,
+    ]);
+
+    $this->actingAs($invitedUser);
+
+    Livewire::test('pages::teams.pending-invitations-modal')
+        ->call('declineInvitation', $invitation->code)
+        ->assertHasNoErrors();
+
+    $this->assertDatabaseMissing('team_invitations', [
+        'id' => $invitation->id,
+    ]);
+
+    expect($invitedUser->fresh()->belongsToTeam($team))->toBeFalse();
+});
+
+test('an invitation addressed to someone else cannot be declined', function () {
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create(['email' => 'other@example.com']);
+    $team = Team::factory()->create();
+
+    $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
+
+    $invitation = TeamInvitation::factory()->create([
+        'team_id' => $team->id,
+        'email' => 'invited@example.com',
+        'invited_by' => $owner->id,
+    ]);
+
+    $this->actingAs($otherUser);
+
+    Livewire::test('pages::teams.pending-invitations-modal')
+        ->call('declineInvitation', $invitation->code)
+        ->assertHasErrors(['invitation']);
+
+    $this->assertDatabaseHas('team_invitations', [
+        'id' => $invitation->id,
+    ]);
+});
+
 test('team invitations cannot be accepted by user that wasnt invited', function () {
     $owner = User::factory()->create();
     $uninvitedUser = User::factory()->create(['email' => 'uninvited@example.com']);

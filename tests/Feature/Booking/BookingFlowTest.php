@@ -248,6 +248,25 @@ test('the eleventh booking attempt within a minute is throttled', function () {
     Mail::assertNothingQueued();
 });
 
+test('the sixty-first slot-computation step within a minute is throttled', function () {
+    // chooseStaff enters the time step and consumes the first hit of the
+    // 60/min step budget (SEC-RATE, Epic 10).
+    $component = Livewire::test('pages::booking.show', ['tenant' => $this->team->slug])
+        ->call('chooseService', $this->service->id)
+        ->call('chooseStaff', (string) $this->staff->id)
+        ->assertHasNoErrors();
+
+    foreach (range(2, 60) as $attempt) {
+        RateLimiter::attempt('booking-steps:127.0.0.1', 60, fn (): bool => true, 60);
+    }
+
+    // The sixty-first step action within the minute errors with a friendly
+    // message instead of recomputing slots.
+    $component->call('selectDate', '2027-03-08')
+        ->assertHasErrors(['booking'])
+        ->assertSee('Too many requests. Please wait a minute and try again.');
+});
+
 test('an unknown tenant slug 404s the booking page', function () {
     $this->get('/tenant-that-does-not-exist')->assertNotFound();
 });

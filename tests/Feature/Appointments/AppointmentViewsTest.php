@@ -171,6 +171,34 @@ test('the default date range starts today and hides past appointments', function
     expect($component->instance()->appointments->modelKeys())->toBe([$future->id]);
 });
 
+test('the appointments list paginates at 25 rows and the second page shows the rest', function () {
+    foreach (range(0, 29) as $index) {
+        viewsAppointment(
+            $this->team,
+            $this->ownStaff,
+            $this->serviceA,
+            now()->addDays(2 + intdiv($index, 10))->setTime(8 + ($index % 10), 0)->toIso8601String(),
+        );
+    }
+
+    $this->actingAs($this->admin);
+
+    $component = Livewire::test('pages::appointments.index', ['current_team' => $this->team]);
+
+    expect($component->instance()->appointments->count())->toBe(25)
+        ->and($component->instance()->appointments->total())->toBe(30);
+
+    $component->call('gotoPage', 2);
+
+    expect($component->instance()->appointments->count())->toBe(5)
+        ->and($component->instance()->appointments->currentPage())->toBe(2);
+
+    // Changing a filter jumps back to the first page.
+    $component->set('serviceFilter', (string) $this->serviceA->id);
+
+    expect($component->instance()->appointments->currentPage())->toBe(1);
+});
+
 describe('query counts (NFR-PERF)', function () {
     beforeEach(function () {
         $this->queries = 0;

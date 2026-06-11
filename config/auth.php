@@ -103,6 +103,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Password Policy
+    |--------------------------------------------------------------------------
+    |
+    | Whether the strict password policy (12+ characters, mixed case,
+    | numbers, symbols, not compromised) is enforced. The default of null
+    | means "strict in production, relaxed elsewhere"; set the flag
+    | explicitly to force either policy regardless of the environment.
+    |
+    */
+
+    'password_policy' => [
+        'strict' => env('AUTH_STRICT_PASSWORDS'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Password Confirmation Timeout
     |--------------------------------------------------------------------------
     |
